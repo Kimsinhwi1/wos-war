@@ -62,15 +62,32 @@ export function normalizeNickname(name: string): string {
 }
 
 /**
+ * Small caps / phonetic Latin → standard Latin mapping
+ * 게임 닉네임에서 sᴜɴsᴇᴛ 같은 유니코드 스몰캡 처리
+ */
+const SMALL_CAPS: Record<string, string> = {
+  '\u1D00': 'a', '\u0299': 'b', '\u1D04': 'c', '\u1D05': 'd',
+  '\u1D07': 'e', '\uA730': 'f', '\u0262': 'g', '\u029C': 'h',
+  '\u026A': 'i', '\u1D0A': 'j', '\u1D0B': 'k', '\u029F': 'l',
+  '\u1D0D': 'm', '\u0274': 'n', '\u1D0F': 'o', '\u1D18': 'p',
+  '\u01EB': 'q', '\u0280': 'r', '\uA731': 's', '\u1D1B': 't',
+  '\u1D1C': 'u', '\u1D20': 'v', '\u1D21': 'w', '\u028F': 'y',
+  '\u1D22': 'z',
+};
+
+/**
  * Aggressive normalization for matching/merging:
  * 1. NFKC normalization (한글 자모 합성, CJK 호환 한자 통일)
- * 2. Strip ALL special symbols, spaces, emojis → keeps only letters & digits
- * 3. Lowercase for case-insensitive matching
- * e.g. "◈PLUTO◈" → "pluto", "설 확" → "설확", "해너미♡SUNSET" → "해너미sunset"
+ * 2. Small caps → standard Latin (ᴜ→u, ɴ→n, ᴇ→e, ᴛ→t)
+ * 3. Keep only: basic Latin, Hangul, CJK, Japanese kana, digits
+ *    (strips Vai ꕥ, Tibetan ༄, decorative symbols etc.)
+ * 4. Lowercase
  */
 export function normalizeForMatch(name: string): string {
-  return normalizeNickname(name)
-    .normalize('NFKC')               // 유니코드 호환 정규화 (한글 자모, CJK 호환 한자 등)
-    .replace(/[^\p{L}\p{N}]/gu, '')  // 유니코드 문자·숫자만 유지
+  let s = normalizeNickname(name).normalize('NFKC');
+  // Small caps → regular Latin
+  s = Array.from(s).map(c => SMALL_CAPS[c] ?? c).join('');
+  return s
+    .replace(/[^a-zA-Z0-9\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu, '')
     .toLowerCase();
 }

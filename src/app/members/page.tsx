@@ -217,7 +217,7 @@ export default function MembersPage() {
     }
   }, [screenshotFiles, importMembers, mergeMembers, mergeMode, clearScreenshots]);
 
-  // Excel download
+  // Excel download (Blob 방식 — 브라우저 호환)
   const downloadExcel = useCallback(async () => {
     try {
       const XLSX = await import('xlsx');
@@ -233,9 +233,20 @@ export default function MembersPage() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '\uBA64\uBC84\uBAA9\uB85D');
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      XLSX.writeFile(wb, `WOS_\uBA64\uBC84\uBAA9\uB85D_${today}.xlsx`);
+      // writeFile 대신 Blob으로 직접 다운로드 (Node.js 의존성 제거)
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `WOS_\uBA64\uBC84\uBAA9\uB85D_${today}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       toast.success('엑셀 파일을 다운로드했습니다');
-    } catch {
+    } catch (err) {
+      console.error('Excel download error:', err);
       toast.error('엑셀 다운로드 실패');
     }
   }, [allMembers]);

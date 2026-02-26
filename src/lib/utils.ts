@@ -47,3 +47,14 @@ export function generateId(): string {
 export function formatTroopRatio(infantry: number, lancer: number, marksman: number): string {
   return `${infantry}:${lancer}:${marksman}`;
 }
+
+/**
+ * Normalize nickname for comparison (strip alliance tags like [HAN], [KOR])
+ * Keeps original casing and special characters, only removes bracket tags.
+ */
+export function normalizeNickname(name: string): string {
+  return name
+    .trim()
+    .replace(/^\[.*?\]\s*/, '')
+    .trim();
+}

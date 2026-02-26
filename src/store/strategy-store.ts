@@ -29,7 +29,7 @@ import {
   HEROES,
 } from '@/lib/constants';
 import { autoAssignMembers } from '@/lib/auto-assign';
-import { generateId, parseCombatPower } from '@/lib/utils';
+import { generateId, parseCombatPower, normalizeNickname } from '@/lib/utils';
 
 interface StrategyStore {
   // Step 1: Members
@@ -119,18 +119,27 @@ export const useStrategyStore = create<StrategyStore>()(
         })),
       mergeMembers: (newMembers) =>
         set((state) => {
+          // normalizeNickname으로 비교하되, 원본 닉네임 유지
           const memberMap = new Map<string, AllianceMember>();
+          const keyMap = new Map<string, string>(); // normalizedKey → originalKey
+
           // Existing members first
           for (const m of state.allMembers) {
-            memberMap.set(m.nickname.trim(), m);
+            const key = normalizeNickname(m.nickname);
+            memberMap.set(key, m);
+            keyMap.set(key, m.nickname);
           }
           // Merge new members
           for (const m of newMembers) {
-            const key = m.nickname.trim();
+            const key = normalizeNickname(m.nickname);
             const existing = memberMap.get(key);
             if (existing) {
+              // 더 긴 닉네임(태그 없는 원본)이나 기존 닉네임 유지
+              const bestNickname = existing.nickname.length >= m.nickname.length
+                ? existing.nickname : m.nickname;
               memberMap.set(key, {
                 ...existing,
+                nickname: normalizeNickname(bestNickname),
                 combatPower: m.combatPowerNumeric > existing.combatPowerNumeric ? m.combatPower : existing.combatPower,
                 combatPowerNumeric: Math.max(m.combatPowerNumeric, existing.combatPowerNumeric),
                 fcLevel: Math.max(m.fcLevel, existing.fcLevel),
@@ -139,7 +148,7 @@ export const useStrategyStore = create<StrategyStore>()(
                 isFC5: Math.max(m.fcLevel, existing.fcLevel) >= 5,
               });
             } else {
-              memberMap.set(key, m);
+              memberMap.set(key, { ...m, nickname: normalizeNickname(m.nickname) });
             }
           }
           const merged = Array.from(memberMap.values()).map((m, i) => ({ ...m, rank: i + 1 }));

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStrategyStore } from '@/store/strategy-store';
 import { getDeepDiveIcon } from '@/lib/constants';
-import { formatCombatPower } from '@/lib/utils';
+import { formatCombatPower, normalizeNickname } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { AllianceMember } from '@/lib/types';
 
@@ -164,13 +164,15 @@ export default function MembersPage() {
       }
     }
 
-    // Merge duplicates by nickname
+    // Merge duplicates by normalized nickname (strips [HAN] etc.)
     const memberMap = new Map<string, AllianceMember>();
     for (const m of parsedMembers) {
-      const existing = memberMap.get(m.nickname);
+      const key = normalizeNickname(m.nickname);
+      const existing = memberMap.get(key);
       if (existing) {
-        memberMap.set(m.nickname, {
+        memberMap.set(key, {
           ...existing,
+          nickname: key, // Use normalized nickname
           combatPower: m.combatPowerNumeric > existing.combatPowerNumeric ? m.combatPower : existing.combatPower,
           combatPowerNumeric: Math.max(m.combatPowerNumeric, existing.combatPowerNumeric),
           fcLevel: Math.max(m.fcLevel, existing.fcLevel),
@@ -179,7 +181,7 @@ export default function MembersPage() {
           isFC5: Math.max(m.fcLevel, existing.fcLevel) >= 5,
         });
       } else {
-        memberMap.set(m.nickname, m);
+        memberMap.set(key, { ...m, nickname: key });
       }
     }
 

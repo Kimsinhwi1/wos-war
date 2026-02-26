@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStrategyStore } from '@/store/strategy-store';
 import { getDeepDiveIcon } from '@/lib/constants';
-import { formatCombatPower, normalizeNickname } from '@/lib/utils';
+import { formatCombatPower, normalizeNickname, normalizeForMatch } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { AllianceMember } from '@/lib/types';
 
@@ -164,15 +164,17 @@ export default function MembersPage() {
       }
     }
 
-    // Merge duplicates by normalized nickname (strips [HAN] etc.)
+    // Merge duplicates by aggressively normalized nickname
+    // normalizeForMatch strips ALL special chars/spaces for robust matching
     const memberMap = new Map<string, AllianceMember>();
     for (const m of parsedMembers) {
-      const key = normalizeNickname(m.nickname);
-      const existing = memberMap.get(key);
+      const matchKey = normalizeForMatch(m.nickname);
+      const displayName = normalizeNickname(m.nickname);
+      const existing = memberMap.get(matchKey);
       if (existing) {
-        memberMap.set(key, {
+        memberMap.set(matchKey, {
           ...existing,
-          nickname: key, // Use normalized nickname
+          nickname: existing.nickname.length >= displayName.length ? existing.nickname : displayName,
           combatPower: m.combatPowerNumeric > existing.combatPowerNumeric ? m.combatPower : existing.combatPower,
           combatPowerNumeric: Math.max(m.combatPowerNumeric, existing.combatPowerNumeric),
           fcLevel: Math.max(m.fcLevel, existing.fcLevel),
@@ -181,7 +183,7 @@ export default function MembersPage() {
           isFC5: Math.max(m.fcLevel, existing.fcLevel) >= 5,
         });
       } else {
-        memberMap.set(key, { ...m, nickname: key });
+        memberMap.set(matchKey, { ...m, nickname: displayName });
       }
     }
 

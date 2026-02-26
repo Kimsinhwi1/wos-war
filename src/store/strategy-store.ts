@@ -29,7 +29,7 @@ import {
   HEROES,
 } from '@/lib/constants';
 import { autoAssignMembers } from '@/lib/auto-assign';
-import { generateId, parseCombatPower, normalizeNickname } from '@/lib/utils';
+import { generateId, parseCombatPower, normalizeNickname, normalizeForMatch } from '@/lib/utils';
 
 interface StrategyStore {
   // Step 1: Members
@@ -119,22 +119,19 @@ export const useStrategyStore = create<StrategyStore>()(
         })),
       mergeMembers: (newMembers) =>
         set((state) => {
-          // normalizeNickname으로 비교하되, 원본 닉네임 유지
+          // normalizeForMatch로 매칭 (특수문자/공백 모두 제거, 소문자화)
           const memberMap = new Map<string, AllianceMember>();
-          const keyMap = new Map<string, string>(); // normalizedKey → originalKey
 
           // Existing members first
           for (const m of state.allMembers) {
-            const key = normalizeNickname(m.nickname);
+            const key = normalizeForMatch(m.nickname);
             memberMap.set(key, m);
-            keyMap.set(key, m.nickname);
           }
           // Merge new members
           for (const m of newMembers) {
-            const key = normalizeNickname(m.nickname);
+            const key = normalizeForMatch(m.nickname);
             const existing = memberMap.get(key);
             if (existing) {
-              // 더 긴 닉네임(태그 없는 원본)이나 기존 닉네임 유지
               const bestNickname = existing.nickname.length >= m.nickname.length
                 ? existing.nickname : m.nickname;
               memberMap.set(key, {

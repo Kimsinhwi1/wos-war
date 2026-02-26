@@ -49,7 +49,7 @@ export function formatTroopRatio(infantry: number, lancer: number, marksman: num
 }
 
 /**
- * Normalize nickname for comparison:
+ * Normalize nickname for display:
  * 1. Strip alliance tags like [HAN], [KOR]
  * 2. Strip rank medal emojis from alliance member list screenshots
  */
@@ -59,4 +59,15 @@ export function normalizeNickname(name: string): string {
     .replace(/^\[.*?\]\s*/, '')                    // [HAN], [KOR] 등 연맹 태그 제거
     .replace(/^[\u{1F947}\u{1F948}\u{1F949}\u{2B50}\u{1F539}\u{1F538}\u{1F3C5}\u{1F451}\u{1F48E}]+\s*/u, '') // 🥇🥈🥉⭐🔹🔸🏅👑💎
     .trim();
+}
+
+/**
+ * Aggressive normalization for matching/merging:
+ * Strips ALL special symbols, spaces, emojis → keeps only letters & digits
+ * e.g. "◈PLUTO◈" → "pluto", "설 확" → "설확", "해너미♡SUNSET" → "해너미sunset"
+ */
+export function normalizeForMatch(name: string): string {
+  return normalizeNickname(name)
+    .replace(/[^\p{L}\p{N}]/gu, '')  // 유니코드 문자·숫자만 유지
+    .toLowerCase();
 }

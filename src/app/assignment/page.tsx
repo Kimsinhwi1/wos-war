@@ -97,6 +97,11 @@ export default function AssignmentPage() {
         </button>
       </div>
 
+      {/* FC5 안내 */}
+      <div className="p-3 bg-blue-600/10 border border-blue-600/30 rounded-lg text-sm text-blue-300">
+        캐슬(수성/공성 랠리)에는 <span className="font-bold text-blue-200">FC5 이상</span>만 배정됩니다. FC5 미만 멤버는 자동으로 포탑/대기에 배정됩니다.
+      </div>
+
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-center">
@@ -295,16 +300,42 @@ export default function AssignmentPage() {
           <h3 className="font-semibold mb-3">
             포탑 / 대기 멤버 ({assignedMembers.filter((m) => m.group === 'turret').length}명)
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
-            {assignedMembers
-              .filter((m) => m.group === 'turret')
-              .map((m) => (
-                <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-gray-800 rounded text-gray-300">
-                  {m.nickname} <span className="text-gray-500 text-xs">{m.combatPower}</span>
-                  {m.isFC5 && <span className="text-xs text-blue-400 ml-1">FC{m.fcLevel}</span>}
-                </div>
-              ))}
-          </div>
+          {/* FC5 이상 포탑 멤버 */}
+          {(() => {
+            const turretMembers = assignedMembers.filter((m) => m.group === 'turret');
+            const fc5Turret = turretMembers.filter((m) => m.isFC5);
+            const nonFc5Turret = turretMembers.filter((m) => !m.isFC5);
+            return (
+              <div className="space-y-3">
+                {fc5Turret.length > 0 && (
+                  <div>
+                    <p className="text-xs text-blue-400 mb-1">FC5+ 대기 ({fc5Turret.length}명)</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+                      {fc5Turret.map((m) => (
+                        <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-blue-900/20 border border-blue-800/30 rounded text-gray-300">
+                          {m.nickname} <span className="text-gray-500 text-xs">{m.combatPower}</span>
+                          <span className="text-xs text-blue-400 ml-1">FC{m.fcLevel}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {nonFc5Turret.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">FC5 미만 ({nonFc5Turret.length}명) - 캐슬 배정 불가</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+                      {nonFc5Turret.map((m) => (
+                        <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-gray-800 rounded text-gray-500">
+                          {m.nickname} <span className="text-gray-600 text-xs">{m.combatPower}</span>
+                          <span className="text-xs text-gray-600 ml-1">FC{m.fcLevel}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </section>
       )}
 

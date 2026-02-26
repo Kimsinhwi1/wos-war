@@ -91,3 +91,34 @@ export function normalizeForMatch(name: string): string {
     .replace(/[^a-zA-Z0-9\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu, '')
     .toLowerCase();
 }
+
+/**
+ * Levenshtein distance between two strings
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+/**
+ * Similarity score between two nicknames (0~1, 1 = identical)
+ * Uses normalizeForMatch internally for fair comparison
+ */
+export function levenshteinSimilarity(a: string, b: string): number {
+  const na = normalizeForMatch(a);
+  const nb = normalizeForMatch(b);
+  if (na === nb) return 1;
+  const maxLen = Math.max(na.length, nb.length);
+  if (maxLen === 0) return 1;
+  return 1 - levenshteinDistance(na, nb) / maxLen;
+}

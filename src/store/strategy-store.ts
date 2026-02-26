@@ -38,6 +38,7 @@ interface StrategyStore {
   importMembers: (members: AllianceMember[]) => void;
   updateMember: (id: string, fields: Partial<Pick<AllianceMember, 'nickname' | 'combatPower' | 'fcLevel'>>) => void;
   mergeMembers: (newMembers: AllianceMember[]) => void;
+  manualMerge: (keepId: string, removeId: string) => void;
   clearMembers: () => void;
 
   // Step 2: Assignment
@@ -150,6 +151,25 @@ export const useStrategyStore = create<StrategyStore>()(
           }
           const merged = Array.from(memberMap.values()).map((m, i) => ({ ...m, rank: i + 1 }));
           return { allMembers: merged, importedAt: new Date().toISOString() };
+        }),
+      manualMerge: (keepId, removeId) =>
+        set((state) => {
+          const keep = state.allMembers.find((m) => m.id === keepId);
+          const remove = state.allMembers.find((m) => m.id === removeId);
+          if (!keep || !remove) return state;
+          const merged: AllianceMember = {
+            ...keep,
+            combatPower: remove.combatPowerNumeric > keep.combatPowerNumeric ? remove.combatPower : keep.combatPower,
+            combatPowerNumeric: Math.max(keep.combatPowerNumeric, remove.combatPowerNumeric),
+            fcLevel: Math.max(keep.fcLevel, remove.fcLevel),
+            isFC5: Math.max(keep.fcLevel, remove.fcLevel) >= 5,
+            deepDiveRank: keep.deepDiveRank ?? remove.deepDiveRank,
+            stage: keep.stage ?? remove.stage,
+          };
+          const updated = state.allMembers
+            .filter((m) => m.id !== removeId)
+            .map((m) => (m.id === keepId ? merged : m));
+          return { allMembers: updated };
         }),
       clearMembers: () =>
         set({

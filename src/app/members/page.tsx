@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStrategyStore } from '@/store/strategy-store';
 import { getDeepDiveIcon } from '@/lib/constants';
-import { formatCombatPower, normalizeNickname, normalizeForMatch } from '@/lib/utils';
+import { formatCombatPower, normalizeNickname, normalizeForMatch, levenshteinSimilarity } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { AllianceMember } from '@/lib/types';
 
@@ -17,6 +17,7 @@ export default function MembersPage() {
     importMembers,
     mergeMembers,
     updateMember,
+    manualMerge,
     clearMembers,
     setCurrentStep,
   } = useStrategyStore();
@@ -262,6 +263,34 @@ export default function MembersPage() {
     return b.fcLevel - a.fcLevel;
   });
 
+  // 매칭 제안: 전투력 없는 멤버 ↔ 지심 없는 멤버 간 유사도 계산
+  const matchSuggestions = useMemo(() => {
+    // 전투력 0인 멤버 (연맹원 목록에서만 온 멤버)
+    const noCP = allMembers.filter((m) => m.combatPowerNumeric === 0 && m.deepDiveRank !== null);
+    // 지심순위 없는 멤버 (FC/전투력 스크린샷에서만 온 멤버)
+    const noRank = allMembers.filter((m) => m.deepDiveRank === null && m.combatPowerNumeric > 0);
+
+    if (noCP.length === 0 || noRank.length === 0) return [];
+
+    const suggestions: { member: AllianceMember; candidate: AllianceMember; similarity: number }[] = [];
+
+    for (const m of noCP) {
+      let bestMatch: AllianceMember | null = null;
+      let bestScore = 0;
+      for (const c of noRank) {
+        const score = levenshteinSimilarity(m.nickname, c.nickname);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = c;
+        }
+      }
+      if (bestMatch && bestScore >= 0.3) {
+        suggestions.push({ member: m, candidate: bestMatch, similarity: bestScore });
+      }
+    }
+    return suggestions.sort((a, b) => b.similarity - a.similarity);
+  }, [allMembers]);
+
   const fc5Count = allMembers.filter((m) => m.isFC5).length;
   const top40 = allMembers
     .filter((m) => m.deepDiveRank !== null)
@@ -506,6 +535,55 @@ export default function MembersPage() {
               )}
             />
           </div>
+
+          {/* 매칭 제안 섹션 */}
+          {matchSuggestions.length > 0 && (
+            <div className="p-4 bg-yellow-600/10 border border-yellow-600/30 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-yellow-300">
+                닉네임 유사 매칭 제안 ({matchSuggestions.length}건)
+              </p>
+              <p className="text-xs text-yellow-400/70">
+                OCR 인식 차이로 매칭되지 않은 멤버를 합칠 수 있습니다
+              </p>
+              <div className="space-y-2">
+                {matchSuggestions.map(({ member, candidate, similarity }) => (
+                  <div
+                    key={member.id + candidate.id}
+                    className="flex items-center gap-2 text-sm bg-gray-900/50 rounded px-3 py-2"
+                  >
+                    <span className="text-gray-300 min-w-0 truncate flex-1" title={member.nickname}>
+                      {member.nickname}
+                      <span className="text-xs text-gray-500 ml-1">
+                        (지심{member.deepDiveRank}, CP 0)
+                      </span>
+                    </span>
+                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+                      similarity >= 0.7 ? 'bg-green-600/20 text-green-400' :
+                      similarity >= 0.5 ? 'bg-yellow-600/20 text-yellow-400' :
+                      'bg-red-600/20 text-red-400'
+                    }`}>
+                      {Math.round(similarity * 100)}%
+                    </span>
+                    <span className="text-gray-300 min-w-0 truncate flex-1 text-right" title={candidate.nickname}>
+                      {candidate.nickname}
+                      <span className="text-xs text-gray-500 ml-1">
+                        ({candidate.combatPower}, FC{candidate.fcLevel})
+                      </span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        manualMerge(member.id, candidate.id);
+                        toast.success(`${member.nickname} + ${candidate.nickname} 병합 완료`);
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 shrink-0"
+                    >
+                      합치기
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <p className="text-xs text-gray-500">
             닉네임, 전투력, FC레벨을 클릭하면 수정할 수 있습니다

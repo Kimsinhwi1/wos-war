@@ -183,7 +183,7 @@ export interface StrategyDocument {
   title: string;
   lastUpdated: string;
   discordLink: string;
-  gen4Heroes: Hero[];
+  legendaryHeroes: Hero[];
   rallyTypes: RallyType[];
   counterMatrix: CounterEntry[];
   joinerEffects: JoinerEffectEntry[];

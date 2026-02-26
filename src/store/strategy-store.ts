@@ -29,13 +29,15 @@ import {
   HEROES,
 } from '@/lib/constants';
 import { autoAssignMembers } from '@/lib/auto-assign';
-import { generateId } from '@/lib/utils';
+import { generateId, parseCombatPower } from '@/lib/utils';
 
 interface StrategyStore {
   // Step 1: Members
   allMembers: AllianceMember[];
   importedAt: string | null;
   importMembers: (members: AllianceMember[]) => void;
+  updateMember: (id: string, fields: Partial<Pick<AllianceMember, 'nickname' | 'combatPower' | 'fcLevel'>>) => void;
+  mergeMembers: (newMembers: AllianceMember[]) => void;
   clearMembers: () => void;
 
   // Step 2: Assignment
@@ -96,6 +98,53 @@ export const useStrategyStore = create<StrategyStore>()(
       importedAt: null,
       importMembers: (members) =>
         set({ allMembers: members, importedAt: new Date().toISOString() }),
+      updateMember: (id, fields) =>
+        set((state) => ({
+          allMembers: state.allMembers.map((m) => {
+            if (m.id !== id) return m;
+            const updated = { ...m };
+            if (fields.nickname !== undefined && fields.nickname.trim() !== '') {
+              updated.nickname = fields.nickname.trim();
+            }
+            if (fields.combatPower !== undefined) {
+              updated.combatPower = fields.combatPower;
+              updated.combatPowerNumeric = parseCombatPower(fields.combatPower);
+            }
+            if (fields.fcLevel !== undefined) {
+              updated.fcLevel = Math.max(0, Math.min(10, fields.fcLevel));
+              updated.isFC5 = updated.fcLevel >= 5;
+            }
+            return updated;
+          }),
+        })),
+      mergeMembers: (newMembers) =>
+        set((state) => {
+          const memberMap = new Map<string, AllianceMember>();
+          // Existing members first
+          for (const m of state.allMembers) {
+            memberMap.set(m.nickname.trim(), m);
+          }
+          // Merge new members
+          for (const m of newMembers) {
+            const key = m.nickname.trim();
+            const existing = memberMap.get(key);
+            if (existing) {
+              memberMap.set(key, {
+                ...existing,
+                combatPower: m.combatPowerNumeric > existing.combatPowerNumeric ? m.combatPower : existing.combatPower,
+                combatPowerNumeric: Math.max(m.combatPowerNumeric, existing.combatPowerNumeric),
+                fcLevel: Math.max(m.fcLevel, existing.fcLevel),
+                deepDiveRank: m.deepDiveRank ?? existing.deepDiveRank,
+                stage: m.stage ?? existing.stage,
+                isFC5: Math.max(m.fcLevel, existing.fcLevel) >= 5,
+              });
+            } else {
+              memberMap.set(key, m);
+            }
+          }
+          const merged = Array.from(memberMap.values()).map((m, i) => ({ ...m, rank: i + 1 }));
+          return { allMembers: merged, importedAt: new Date().toISOString() };
+        }),
       clearMembers: () =>
         set({
           allMembers: [],
@@ -326,13 +375,21 @@ export const useStrategyStore = create<StrategyStore>()(
       setNotionPageUrl: (url) => set({ notionPageUrl: url }),
       generateDocument: () => {
         const state = get();
-        const gen4Heroes = HEROES.filter((h) => h.generation === 4);
+        // 랠리 설정에서 실제 사용 중인 영웅만 추출
+        const usedHeroIds = new Set<string>();
+        state.rallyConfigs.forEach((r) => {
+          usedHeroIds.add(r.leaderComposition.hero1Id);
+          usedHeroIds.add(r.leaderComposition.hero2Id);
+          usedHeroIds.add(r.leaderComposition.hero3Id);
+          r.joinerHeroes.forEach((id) => usedHeroIds.add(id));
+        });
+        const legendaryHeroes = HEROES.filter((h) => usedHeroIds.has(h.id));
 
         return {
-          title: '4세대 SVS 캐슬전투 최종 전략서 (HAN)',
+          title: 'SVS 캐슬전투 최종 전략서 (HAN)',
           lastUpdated: new Date().toISOString().split('T')[0],
           discordLink: 'https://discord.gg/CXXAGgEgm7',
-          gen4Heroes,
+          legendaryHeroes,
           rallyTypes: state.rallyConfigs,
           counterMatrix: DEFAULT_COUNTER_MATRIX,
           joinerEffects: DEFAULT_JOINER_EFFECTS,

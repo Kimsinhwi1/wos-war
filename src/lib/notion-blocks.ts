@@ -118,18 +118,22 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
   }
   blocks.push(divider());
 
-  // Gen 4 Heroes
-  blocks.push(heading2('4세대 레전드(SSR) 영웅'));
-  blocks.push(
-    table(4, ['병과', '영웅', '역할', '스탯'],
-      doc.gen4Heroes.map((h) => [
-        h.heroClass === 'infantry' ? '방패' : h.heroClass === 'lancer' ? '창병' : '궁병',
-        h.nameKo,
-        h.role === 'defense' ? '수성' : '집결(공성)',
-        `${h.statPercent}%`,
-      ]),
-    ),
-  );
+  // Legendary Heroes
+  blocks.push(heading2('레전드 영웅 목록'));
+  if (doc.legendaryHeroes.length > 0) {
+    blocks.push(
+      table(4, ['세대', '영웅', '병과', '역할'],
+        doc.legendaryHeroes.map((h) => [
+          `${h.generation}세대`,
+          h.nameKo,
+          h.heroClass === 'infantry' ? '방패' : h.heroClass === 'lancer' ? '창병' : '궁병',
+          h.role === 'defense' ? '수성' : '집결(공성)',
+        ]),
+      ),
+    );
+  } else {
+    blocks.push(paragraph(text('랠리 설정에서 영웅을 선택하면 표시됩니다.')));
+  }
   blocks.push(divider());
 
   // Hero Composition
@@ -249,18 +253,22 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
   blocks.push(heading1('English Version'));
   blocks.push(divider());
 
-  // Gen 4 Heroes (EN)
-  blocks.push(heading2('Gen 4 Legendary (SSR) Heroes'));
-  blocks.push(
-    table(4, ['Class', 'Hero', 'Role', 'Stats'],
-      doc.gen4Heroes.map((h) => [
-        h.heroClass.charAt(0).toUpperCase() + h.heroClass.slice(1),
-        h.nameEn,
-        h.role === 'defense' ? 'Defense' : 'Rally (Offense)',
-        `${h.statPercent}%`,
-      ]),
-    ),
-  );
+  // Legendary Heroes (EN)
+  blocks.push(heading2('Legendary Heroes'));
+  if (doc.legendaryHeroes.length > 0) {
+    blocks.push(
+      table(4, ['Gen', 'Hero', 'Class', 'Role'],
+        doc.legendaryHeroes.map((h) => [
+          `Gen ${h.generation}`,
+          h.nameEn,
+          h.heroClass.charAt(0).toUpperCase() + h.heroClass.slice(1),
+          h.role === 'defense' ? 'Defense' : 'Rally (Offense)',
+        ]),
+      ),
+    );
+  } else {
+    blocks.push(paragraph(text('Heroes will be displayed once rally settings are configured.')));
+  }
   blocks.push(divider());
 
   // Hero Composition (EN)

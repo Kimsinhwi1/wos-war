@@ -12,11 +12,19 @@ type UploadTab = 'excel' | 'screenshot';
 
 export default function MembersPage() {
   const router = useRouter();
-  const { allMembers, importMembers, clearMembers, setCurrentStep } = useStrategyStore();
+  const {
+    allMembers,
+    importMembers,
+    mergeMembers,
+    updateMember,
+    clearMembers,
+    setCurrentStep,
+  } = useStrategyStore();
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sortField, setSortField] = useState<'deepDiveRank' | 'combatPower' | 'fcLevel'>('deepDiveRank');
   const [uploadTab, setUploadTab] = useState<UploadTab>('excel');
+  const [mergeMode, setMergeMode] = useState(false);
 
   // Screenshot state
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
@@ -43,15 +51,22 @@ export default function MembersPage() {
         const res = await fetch('/api/parse-excel', { method: 'POST', body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        importMembers(data.members);
-        toast.success(`${data.members.length}명 멤버를 불러왔습니다 (FC5: ${data.summary.fc5Count}명)`);
+
+        if (mergeMode) {
+          mergeMembers(data.members);
+          setMergeMode(false);
+          toast.success(`${data.members.length}명 데이터를 병합했습니다`);
+        } else {
+          importMembers(data.members);
+          toast.success(`${data.members.length}명 멤버를 불러왔습니다 (FC5: ${data.summary.fc5Count}명)`);
+        }
       } catch (err) {
         toast.error('파일 파싱 실패: ' + (err instanceof Error ? err.message : 'Unknown error'));
       } finally {
         setIsLoading(false);
       }
     },
-    [importMembers],
+    [importMembers, mergeMembers, mergeMode],
   );
 
   const onDrop = useCallback(
@@ -85,7 +100,6 @@ export default function MembersPage() {
       if (prev.length + files.length > maxFiles) {
         toast.error(`최대 ${maxFiles}장까지 업로드 가능합니다`);
       }
-      // Generate previews
       const newPreviews: string[] = [];
       combined.forEach((file) => {
         const url = URL.createObjectURL(file);
@@ -122,7 +136,7 @@ export default function MembersPage() {
     setIsParsing(true);
     setParseProgress({ current: 0, total: screenshotFiles.length });
 
-    const allMembers: AllianceMember[] = [];
+    const parsedMembers: AllianceMember[] = [];
     let errorCount = 0;
 
     for (let i = 0; i < screenshotFiles.length; i++) {
@@ -142,7 +156,7 @@ export default function MembersPage() {
           continue;
         }
         if (data.members?.length > 0) {
-          allMembers.push(...data.members);
+          parsedMembers.push(...data.members);
         }
       } catch (err) {
         console.error(`Screenshot ${i + 1} fetch error:`, err);
@@ -152,10 +166,9 @@ export default function MembersPage() {
 
     // Merge duplicates by nickname
     const memberMap = new Map<string, AllianceMember>();
-    for (const m of allMembers) {
+    for (const m of parsedMembers) {
       const existing = memberMap.get(m.nickname);
       if (existing) {
-        // Merge: keep higher values, fill nulls
         memberMap.set(m.nickname, {
           ...existing,
           combatPower: m.combatPowerNumeric > existing.combatPowerNumeric ? m.combatPower : existing.combatPower,
@@ -183,13 +196,45 @@ export default function MembersPage() {
       return;
     }
 
-    importMembers(merged);
-    clearScreenshots();
-    const fc5 = merged.filter((m) => m.isFC5).length;
-    toast.success(
-      `${merged.length}명 추출 완료 (FC5: ${fc5}명)${errorCount > 0 ? ` / ${errorCount}장 실패` : ''}`,
-    );
-  }, [screenshotFiles, importMembers, clearScreenshots]);
+    if (mergeMode) {
+      mergeMembers(merged);
+      setMergeMode(false);
+      clearScreenshots();
+      toast.success(
+        `${merged.length}명 데이터를 병합했습니다${errorCount > 0 ? ` / ${errorCount}장 실패` : ''}`,
+      );
+    } else {
+      importMembers(merged);
+      clearScreenshots();
+      const fc5 = merged.filter((m) => m.isFC5).length;
+      toast.success(
+        `${merged.length}명 추출 완료 (FC5: ${fc5}명)${errorCount > 0 ? ` / ${errorCount}장 실패` : ''}`,
+      );
+    }
+  }, [screenshotFiles, importMembers, mergeMembers, mergeMode, clearScreenshots]);
+
+  // Excel download
+  const downloadExcel = useCallback(async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const data = allMembers.map((m, i) => ({
+        '#': i + 1,
+        '\uC774\uB984': m.nickname,
+        '\uC804\uD22C\uB825': m.combatPower,
+        '\uBD88\uC758\uC218\uC815': m.fcLevel,
+        '\uC9C0\uC2EC\uD0D0\uD5D8': m.deepDiveRank ?? '',
+        '\uC2A4\uD14C\uC774\uC9C0': m.stage ?? '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '\uBA64\uBC84\uBAA9\uB85D');
+      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      XLSX.writeFile(wb, `WOS_\uBA64\uBC84\uBAA9\uB85D_${today}.xlsx`);
+      toast.success('엑셀 파일을 다운로드했습니다');
+    } catch {
+      toast.error('엑셀 다운로드 실패');
+    }
+  }, [allMembers]);
 
   const sortedMembers = [...allMembers].sort((a, b) => {
     if (sortField === 'deepDiveRank') {
@@ -209,22 +254,54 @@ export default function MembersPage() {
     .slice(0, 40);
   const top40Ids = new Set(top40.map((m) => m.id));
 
+  const showUploadArea = allMembers.length === 0 || mergeMode;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Step 1: 멤버 관리</h2>
-        {allMembers.length > 0 && (
-          <button
-            onClick={clearMembers}
-            className="px-3 py-1.5 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30"
-          >
-            초기화
-          </button>
+        {allMembers.length > 0 && !mergeMode && (
+          <div className="flex gap-2">
+            <button
+              onClick={downloadExcel}
+              className="px-3 py-1.5 text-sm bg-green-600/20 text-green-400 rounded hover:bg-green-600/30"
+            >
+              엑셀 다운로드
+            </button>
+            <button
+              onClick={() => setMergeMode(true)}
+              className="px-3 py-1.5 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30"
+            >
+              추가 가져오기
+            </button>
+            <button
+              onClick={clearMembers}
+              className="px-3 py-1.5 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30"
+            >
+              초기화
+            </button>
+          </div>
         )}
       </div>
 
+      {/* Merge Mode Banner */}
+      {mergeMode && (
+        <div className="p-3 bg-blue-600/10 border border-blue-600/30 rounded-lg flex items-center justify-between">
+          <p className="text-sm text-blue-300">
+            추가 가져오기 모드: 기존 {allMembers.length}명 데이터에 새 데이터를 병합합니다.
+            (닉네임 기준 중복 병합, 더 높은 값 유지)
+          </p>
+          <button
+            onClick={() => { setMergeMode(false); clearScreenshots(); }}
+            className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+          >
+            취소
+          </button>
+        </div>
+      )}
+
       {/* Upload Area */}
-      {allMembers.length === 0 && (
+      {showUploadArea && (
         <div className="space-y-4">
           {/* Tab Selector */}
           <div className="flex border-b border-gray-700">
@@ -264,7 +341,9 @@ export default function MembersPage() {
                 <p className="text-gray-400">파싱 중...</p>
               ) : (
                 <>
-                  <p className="text-lg text-gray-300 mb-2">엑셀 파일을 드래그하거나 클릭하여 업로드</p>
+                  <p className="text-lg text-gray-300 mb-2">
+                    엑셀 파일을 드래그하거나 클릭하여 업로드
+                  </p>
                   <p className="text-sm text-gray-500">연맹_멤버_통합.xlsx</p>
                   <input
                     type="file"
@@ -376,7 +455,9 @@ export default function MembersPage() {
                   >
                     {isParsing
                       ? `추출 중... (${parseProgress.current}/${parseProgress.total})`
-                      : `${screenshotFiles.length}장 스크린샷에서 멤버 추출`}
+                      : mergeMode
+                        ? `${screenshotFiles.length}장에서 추출하여 병합`
+                        : `${screenshotFiles.length}장 스크린샷에서 멤버 추출`}
                   </button>
 
                   {isParsing && (
@@ -397,7 +478,7 @@ export default function MembersPage() {
       )}
 
       {/* Summary Cards */}
-      {allMembers.length > 0 && (
+      {allMembers.length > 0 && !mergeMode && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             <SummaryCard label="총 인원" value={allMembers.length} />
@@ -410,6 +491,10 @@ export default function MembersPage() {
               )}
             />
           </div>
+
+          <p className="text-xs text-gray-500">
+            닉네임, 전투력, FC레벨을 클릭하면 수정할 수 있습니다
+          </p>
 
           {/* Sort Controls */}
           <div className="flex gap-2">
@@ -446,6 +531,7 @@ export default function MembersPage() {
                     member={member}
                     index={i}
                     isTop40={top40Ids.has(member.id)}
+                    onUpdate={updateMember}
                   />
                 ))}
               </tbody>
@@ -479,22 +565,148 @@ function SummaryCard({ label, value, highlight }: { label: string; value: string
   );
 }
 
-function MemberRow({ member, index, isTop40 }: { member: AllianceMember; index: number; isTop40: boolean }) {
+function MemberRow({
+  member,
+  index,
+  isTop40,
+  onUpdate,
+}: {
+  member: AllianceMember;
+  index: number;
+  isTop40: boolean;
+  onUpdate: (id: string, fields: Partial<Pick<AllianceMember, 'nickname' | 'combatPower' | 'fcLevel'>>) => void;
+}) {
   const icon = getDeepDiveIcon(member.deepDiveRank);
+  const [editField, setEditField] = useState<'nickname' | 'combatPower' | 'fcLevel' | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    if (editField === 'fcLevel' && selectRef.current) {
+      selectRef.current.focus();
+    } else if (editField && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editField]);
+
+  const startEdit = (field: 'nickname' | 'combatPower' | 'fcLevel') => {
+    setEditField(field);
+    if (field === 'nickname') setEditValue(member.nickname);
+    else if (field === 'combatPower') setEditValue(member.combatPower);
+    else setEditValue(String(member.fcLevel));
+  };
+
+  const saveEdit = () => {
+    if (!editField) return;
+    if (editField === 'nickname') {
+      if (editValue.trim()) {
+        onUpdate(member.id, { nickname: editValue });
+      }
+    } else if (editField === 'combatPower') {
+      if (editValue.trim()) {
+        onUpdate(member.id, { combatPower: editValue.trim() });
+      }
+    } else if (editField === 'fcLevel') {
+      onUpdate(member.id, { fcLevel: parseInt(editValue, 10) || 0 });
+    }
+    setEditField(null);
+  };
+
+  const cancelEdit = () => {
+    setEditField(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') saveEdit();
+    if (e.key === 'Escape') cancelEdit();
+  };
+
   return (
     <tr className={`border-t border-gray-800 ${isTop40 ? 'bg-blue-600/5' : ''} ${!member.isFC5 ? 'opacity-50' : ''}`}>
       <td className="px-2 sm:px-3 py-2 text-gray-500 hidden sm:table-cell">{index + 1}</td>
+
+      {/* Nickname - editable */}
       <td className="px-2 sm:px-3 py-2 font-medium text-xs sm:text-sm">
-        {icon && <span className="mr-1">{icon}</span>}
-        {member.nickname}
-        {member.isFC5 && <span className="ml-1 text-xs text-blue-400">FC{member.fcLevel}</span>}
+        {editField === 'nickname' ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={handleKeyDown}
+            className="w-full bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-white text-xs sm:text-sm outline-none"
+          />
+        ) : (
+          <span
+            onClick={() => startEdit('nickname')}
+            className="cursor-pointer hover:text-blue-400 transition-colors"
+            title="클릭하여 수정"
+          >
+            {icon && <span className="mr-1">{icon}</span>}
+            {member.nickname}
+            {member.isFC5 && <span className="ml-1 text-xs text-blue-400">FC{member.fcLevel}</span>}
+          </span>
+        )}
       </td>
-      <td className="px-2 sm:px-3 py-2 text-right text-gray-300 text-xs sm:text-sm">{member.combatPower}</td>
+
+      {/* Combat Power - editable */}
+      <td className="px-2 sm:px-3 py-2 text-right text-xs sm:text-sm">
+        {editField === 'combatPower' ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={handleKeyDown}
+            placeholder="예: 375.7M"
+            className="w-24 bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-white text-xs sm:text-sm text-right outline-none"
+          />
+        ) : (
+          <span
+            onClick={() => startEdit('combatPower')}
+            className="cursor-pointer text-gray-300 hover:text-blue-400 transition-colors"
+            title="클릭하여 수정"
+          >
+            {member.combatPower || '0'}
+          </span>
+        )}
+      </td>
+
+      {/* FC Level - editable dropdown */}
       <td className="px-2 sm:px-3 py-2 text-center">
-        <span className={`px-1.5 sm:px-2 py-0.5 rounded text-xs ${member.isFC5 ? 'bg-green-600/20 text-green-400' : 'bg-gray-700 text-gray-400'}`}>
-          {member.fcLevel}
-        </span>
+        {editField === 'fcLevel' ? (
+          <select
+            ref={selectRef}
+            value={editValue}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              onUpdate(member.id, { fcLevel: val });
+              setEditField(null);
+            }}
+            onBlur={() => setEditField(null)}
+            className="bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white text-xs outline-none"
+          >
+            {Array.from({ length: 11 }, (_, i) => (
+              <option key={i} value={i}>{i}</option>
+            ))}
+          </select>
+        ) : (
+          <span
+            onClick={() => startEdit('fcLevel')}
+            className={`inline-block px-1.5 sm:px-2 py-0.5 rounded text-xs cursor-pointer hover:ring-1 hover:ring-blue-500 transition-all ${
+              member.isFC5 ? 'bg-green-600/20 text-green-400' : 'bg-gray-700 text-gray-400'
+            }`}
+            title="클릭하여 수정"
+          >
+            {member.fcLevel}
+          </span>
+        )}
       </td>
+
       <td className="px-2 sm:px-3 py-2 text-center text-gray-300 text-xs sm:text-sm">
         {member.deepDiveRank ?? '-'}
       </td>

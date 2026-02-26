@@ -98,40 +98,50 @@ export default function PreviewPage() {
 
         <hr />
 
-        {/* Gen 4 Heroes */}
+        {/* Legendary Heroes */}
         <h2 className="text-lg font-bold">
-          {lang !== 'en' ? '4세대 레전드(SSR) 영웅' : 'Gen 4 Legendary (SSR) Heroes'}
+          {lang !== 'en' ? '레전드 영웅 목록' : 'Legendary Heroes'}
         </h2>
-        <table className="w-full border-collapse border border-gray-300 text-xs">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '병과' : 'Class'}</th>
-              <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '영웅' : 'Hero'}</th>
-              <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '역할' : 'Role'}</th>
-              <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '스탯' : 'Stats'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {doc.gen4Heroes.map((h) => (
-              <tr key={h.id}>
-                <td className="border border-gray-300 px-2 py-1">
-                  {lang !== 'en'
-                    ? h.heroClass === 'infantry' ? '방패' : h.heroClass === 'lancer' ? '창병' : '궁병'
-                    : h.heroClass.charAt(0).toUpperCase() + h.heroClass.slice(1)}
-                </td>
-                <td className="border border-gray-300 px-2 py-1">
-                  {lang !== 'en' ? h.nameKo : h.nameEn}
-                </td>
-                <td className="border border-gray-300 px-2 py-1">
-                  {lang !== 'en'
-                    ? h.role === 'defense' ? '수성' : '집결(공성)'
-                    : h.role === 'defense' ? 'Defense' : 'Rally (Offense)'}
-                </td>
-                <td className="border border-gray-300 px-2 py-1">{h.statPercent}%</td>
+        {doc.legendaryHeroes.length > 0 ? (
+          <table className="w-full border-collapse border border-gray-300 text-xs">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '세대' : 'Gen'}</th>
+                <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '영웅' : 'Hero'}</th>
+                <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '병과' : 'Class'}</th>
+                <th className="border border-gray-300 px-2 py-1">{lang !== 'en' ? '역할' : 'Role'}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {doc.legendaryHeroes.map((h) => (
+                <tr key={h.id}>
+                  <td className="border border-gray-300 px-2 py-1">
+                    {lang !== 'en' ? `${h.generation}세대` : `Gen ${h.generation}`}
+                  </td>
+                  <td className="border border-gray-300 px-2 py-1">
+                    {lang !== 'en' ? h.nameKo : h.nameEn}
+                  </td>
+                  <td className="border border-gray-300 px-2 py-1">
+                    {lang !== 'en'
+                      ? h.heroClass === 'infantry' ? '방패' : h.heroClass === 'lancer' ? '창병' : '궁병'
+                      : h.heroClass.charAt(0).toUpperCase() + h.heroClass.slice(1)}
+                  </td>
+                  <td className="border border-gray-300 px-2 py-1">
+                    {lang !== 'en'
+                      ? h.role === 'defense' ? '수성' : '집결(공성)'
+                      : h.role === 'defense' ? 'Defense' : 'Rally (Offense)'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-gray-400 text-sm py-2">
+            {lang !== 'en'
+              ? '랠리 설정에서 영웅을 선택하면 표시됩니다.'
+              : 'Heroes will be displayed once rally settings are configured.'}
+          </p>
+        )}
 
         <hr />
 

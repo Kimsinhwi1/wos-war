@@ -63,11 +63,14 @@ export function normalizeNickname(name: string): string {
 
 /**
  * Aggressive normalization for matching/merging:
- * Strips ALL special symbols, spaces, emojis → keeps only letters & digits
+ * 1. NFKC normalization (한글 자모 합성, CJK 호환 한자 통일)
+ * 2. Strip ALL special symbols, spaces, emojis → keeps only letters & digits
+ * 3. Lowercase for case-insensitive matching
  * e.g. "◈PLUTO◈" → "pluto", "설 확" → "설확", "해너미♡SUNSET" → "해너미sunset"
  */
 export function normalizeForMatch(name: string): string {
   return normalizeNickname(name)
+    .normalize('NFKC')               // 유니코드 호환 정규화 (한글 자모, CJK 호환 한자 등)
     .replace(/[^\p{L}\p{N}]/gu, '')  // 유니코드 문자·숫자만 유지
     .toLowerCase();
 }

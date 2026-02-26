@@ -1,0 +1,376 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useStrategyStore } from '@/store/strategy-store';
+import { getDeepDiveIcon, HEROES } from '@/lib/constants';
+import { toast } from 'sonner';
+import type { AllianceMember, RallyLeaderInfo, AssignedMember, Squad } from '@/lib/types';
+
+export default function AssignmentPage() {
+  const router = useRouter();
+  const {
+    allMembers,
+    assignedMembers,
+    rallyLeaders,
+    squads,
+    setCurrentStep,
+    runAutoAssign,
+    setRallyLeaders,
+    moveSquadMember,
+  } = useStrategyStore();
+
+  const [dragMemberId, setDragMemberId] = useState<string | null>(null);
+  const [dragOverSquadId, setDragOverSquadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentStep(2);
+  }, [setCurrentStep]);
+
+  const fc5Members = allMembers
+    .filter((m) => m.isFC5)
+    .sort((a, b) => {
+      if (a.deepDiveRank === null && b.deepDiveRank === null) return 0;
+      if (a.deepDiveRank === null) return 1;
+      if (b.deepDiveRank === null) return -1;
+      return a.deepDiveRank - b.deepDiveRank;
+    });
+
+  const handleDragStart = useCallback((e: React.DragEvent, memberId: string) => {
+    setDragMemberId(memberId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', memberId);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, squadId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverSquadId(squadId);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverSquadId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, toSquadId: string) => {
+    e.preventDefault();
+    const memberId = e.dataTransfer.getData('text/plain');
+    if (memberId) {
+      moveSquadMember(memberId, toSquadId);
+      toast.success('멤버를 이동했습니다');
+    }
+    setDragMemberId(null);
+    setDragOverSquadId(null);
+  }, [moveSquadMember]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragMemberId(null);
+    setDragOverSquadId(null);
+  }, []);
+
+  if (allMembers.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-gray-400 mb-4">먼저 멤버를 불러와주세요</p>
+        <button
+          onClick={() => router.push('/members')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          &larr; Step 1로 이동
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Step 2: 역할 배정</h2>
+        <button
+          onClick={() => {
+            runAutoAssign();
+            toast.success('자동 배정 완료!');
+          }}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+        >
+          자동 배정
+        </button>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-center">
+          <p className="text-xs text-gray-400">FC5+ 인원</p>
+          <p className="text-xl font-bold text-blue-400">{fc5Members.length}명</p>
+        </div>
+        <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-center">
+          <p className="text-xs text-gray-400">랠리조</p>
+          <p className="text-xl font-bold text-green-400">{squads.length}개</p>
+        </div>
+        <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-center">
+          <p className="text-xs text-gray-400">랠리 참여</p>
+          <p className="text-xl font-bold text-yellow-400">
+            {squads.reduce((sum, s) => sum + s.members.length, 0)}명
+          </p>
+        </div>
+        <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-center">
+          <p className="text-xs text-gray-400">포탑/대기</p>
+          <p className="text-xl font-bold text-gray-400">
+            {assignedMembers.filter((m) => m.group === 'turret').length}명
+          </p>
+        </div>
+      </div>
+
+      {/* Rally Leaders */}
+      <section className="p-4 bg-gray-900 rounded-lg border border-gray-800 space-y-4">
+        <h3 className="font-semibold text-lg">집결장 지정</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <LeaderPicker
+            label="메인 집결장"
+            current={rallyLeaders?.main}
+            members={fc5Members}
+            onSelect={(info) => {
+              const base = rallyLeaders ?? {
+                main: info,
+                sub: { memberId: '', nickname: '', combatPower: '' },
+                substitutes: [],
+              };
+              setRallyLeaders({ ...base, main: info });
+            }}
+          />
+          <LeaderPicker
+            label="서브 집결장"
+            current={rallyLeaders?.sub}
+            members={fc5Members}
+            onSelect={(info) => {
+              const base = rallyLeaders ?? {
+                main: { memberId: '', nickname: '', combatPower: '' },
+                sub: info,
+                substitutes: [],
+              };
+              setRallyLeaders({ ...base, sub: info });
+            }}
+          />
+        </div>
+        {/* Substitute Leaders */}
+        <div>
+          <h4 className="text-sm text-gray-400 mb-2">대체 집결장 (최대 2순위)</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <LeaderPicker
+              label="대체 1순위"
+              current={rallyLeaders?.substitutes?.[0]}
+              members={fc5Members}
+              onSelect={(info) => {
+                const base = rallyLeaders ?? {
+                  main: { memberId: '', nickname: '', combatPower: '' },
+                  sub: { memberId: '', nickname: '', combatPower: '' },
+                  substitutes: [],
+                };
+                const subs = [...(base.substitutes || [])];
+                subs[0] = info;
+                setRallyLeaders({ ...base, substitutes: subs });
+              }}
+            />
+            <LeaderPicker
+              label="대체 2순위"
+              current={rallyLeaders?.substitutes?.[1]}
+              members={fc5Members}
+              onSelect={(info) => {
+                const base = rallyLeaders ?? {
+                  main: { memberId: '', nickname: '', combatPower: '' },
+                  sub: { memberId: '', nickname: '', combatPower: '' },
+                  substitutes: [],
+                };
+                const subs = [...(base.substitutes || [])];
+                subs[1] = info;
+                setRallyLeaders({ ...base, substitutes: subs });
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Rally Groups with Drag & Drop */}
+      {squads.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-lg">
+              랠리조 편성 ({squads.length}개, 조당 {squads[0]?.members.length}~{squads[squads.length - 1]?.members.length}명)
+            </h3>
+            <p className="text-xs text-gray-500">닉네임을 드래그하여 다른 조로 이동</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+            {squads.map((squad) => (
+              <div
+                key={squad.id}
+                onDragOver={(e) => handleDragOver(e, squad.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, squad.id)}
+                className={`p-3 sm:p-4 rounded-lg border transition-colors ${
+                  dragOverSquadId === squad.id
+                    ? 'border-yellow-400 bg-yellow-950/20 ring-2 ring-yellow-400/30'
+                    : squad.role === 'defense'
+                      ? 'border-blue-700 bg-blue-950/30'
+                      : 'border-red-700 bg-red-950/30'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-sm sm:text-base">
+                    {squad.role === 'defense' ? '\uD83D\uDEE1\uFE0F' : '\u2694\uFE0F'} {squad.name}
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                      {HEROES.find((h) => h.id === squad.joinerHero)?.nameKo ?? squad.joinerHero}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {squad.members.length}명
+                    </span>
+                  </div>
+                </div>
+
+                {/* Members - Draggable */}
+                <div className="space-y-1">
+                  {squad.members.map((m, idx) => (
+                    <div
+                      key={m.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, m.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center justify-between text-xs sm:text-sm py-1 px-2 rounded cursor-grab active:cursor-grabbing select-none transition-opacity ${
+                        dragMemberId === m.id
+                          ? 'opacity-30 bg-gray-800/30'
+                          : 'bg-gray-800/50 hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <span>
+                        <span className="text-gray-500 text-xs mr-1">{idx + 1}.</span>
+                        {getDeepDiveIcon(m.deepDiveRank)} {m.nickname}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {m.deepDiveRank && (
+                          <span className="text-xs text-gray-500 hidden sm:inline">지심 {m.deepDiveRank}위</span>
+                        )}
+                        <span className="text-gray-400 text-xs">{m.combatPower}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Substitutes */}
+                {squad.substitutes.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-700">
+                    <p className="text-xs text-gray-500 mb-1">대체 인원</p>
+                    {squad.substitutes.map((m, i) => (
+                      <div
+                        key={m.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, m.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-center justify-between text-xs sm:text-sm py-1 px-2 text-yellow-400/70 cursor-grab active:cursor-grabbing select-none ${
+                          dragMemberId === m.id ? 'opacity-30' : ''
+                        }`}
+                      >
+                        <span>
+                          {i + 1}순위: {getDeepDiveIcon(m.deepDiveRank)} {m.nickname}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {m.deepDiveRank && (
+                            <span className="text-xs text-gray-500 hidden sm:inline">지심 {m.deepDiveRank}위</span>
+                          )}
+                          <span className="text-xs">{m.combatPower}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Turret Members */}
+      {assignedMembers.filter((m) => m.group === 'turret').length > 0 && (
+        <section className="p-4 bg-gray-900 rounded-lg border border-gray-800">
+          <h3 className="font-semibold mb-3">
+            포탑 / 대기 멤버 ({assignedMembers.filter((m) => m.group === 'turret').length}명)
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+            {assignedMembers
+              .filter((m) => m.group === 'turret')
+              .map((m) => (
+                <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-gray-800 rounded text-gray-300">
+                  {m.nickname} <span className="text-gray-500 text-xs">{m.combatPower}</span>
+                  {m.isFC5 && <span className="text-xs text-blue-400 ml-1">FC{m.fcLevel}</span>}
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <button
+          onClick={() => {
+            setCurrentStep(1);
+            router.push('/members');
+          }}
+          className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700"
+        >
+          &larr; 이전
+        </button>
+        <button
+          onClick={() => {
+            if (!rallyLeaders) {
+              toast.error('먼저 자동 배정을 실행해주세요');
+              return;
+            }
+            setCurrentStep(3);
+            router.push('/rally');
+          }}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+        >
+          다음: 집결 설정 &rarr;
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LeaderPicker({
+  label,
+  current,
+  members,
+  onSelect,
+}: {
+  label: string;
+  current?: RallyLeaderInfo;
+  members: AllianceMember[];
+  onSelect: (info: RallyLeaderInfo) => void;
+}) {
+  return (
+    <div>
+      <label className="text-sm text-gray-400 block mb-1">{label}</label>
+      <select
+        value={current?.memberId ?? ''}
+        onChange={(e) => {
+          const m = members.find((m) => m.id === e.target.value);
+          if (m) onSelect({ memberId: m.id, nickname: m.nickname, combatPower: m.combatPower });
+        }}
+        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
+      >
+        <option value="">선택...</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {getDeepDiveIcon(m.deepDiveRank)} {m.nickname} ({m.combatPower})
+          </option>
+        ))}
+      </select>
+      {current && current.memberId && (
+        <p className="text-xs text-gray-500 mt-1">
+          {current.nickname} - {current.combatPower}
+        </p>
+      )}
+    </div>
+  );
+}

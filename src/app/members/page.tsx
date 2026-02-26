@@ -333,25 +333,37 @@ export default function MembersPage() {
       {allMembers.length === 0 ? (
         <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg space-y-3">
           <p className="text-sm font-medium text-gray-200">사용 방법</p>
-          <div className="text-xs text-gray-400 space-y-2">
-            <div className="flex gap-2">
-              <span className="text-blue-400 font-bold shrink-0">1.</span>
-              <p><span className="text-gray-300">연맹원 목록 스크린샷</span>을 먼저 업로드합니다 (순위 + 닉네임 + 지심탐험 점수)</p>
+          <div className="text-xs text-gray-400 space-y-3">
+            <div>
+              <p className="text-gray-300 font-medium mb-1">방법 A: 엑셀 업로드</p>
+              <div className="space-y-1 pl-2 border-l border-gray-700">
+                <p>이미 정리된 엑셀 파일(.xlsx)이 있으면 바로 업로드하면 됩니다</p>
+                <p>필수 컬럼: 이름, 전투력, 불의수정(FC레벨), 지심탐험, 스테이지</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-300 font-medium mb-1">방법 B: 스크린샷 OCR</p>
+              <div className="space-y-1.5 pl-2 border-l border-gray-700">
+                <div className="flex gap-2">
+                  <span className="text-blue-400 font-bold shrink-0">1.</span>
+                  <p><span className="text-gray-300">연맹원 목록 스크린샷</span>을 먼저 업로드 (순위 + 닉네임 + 지심탐험 점수)</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-blue-400 font-bold shrink-0">2.</span>
+                  <p><span className="text-gray-300">[추가 가져오기]</span> 버튼 &rarr; <span className="text-gray-300">FC/전투력 순위 스크린샷</span> 추가 업로드</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-blue-400 font-bold shrink-0">3.</span>
+                  <p>닉네임이 자동 매칭되어 전투력/FC 데이터가 병합됩니다</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-yellow-400 font-bold shrink-0">4.</span>
+                  <p>OCR 인식 차이로 매칭 안 된 멤버는 <span className="text-yellow-300">노란색 매칭 제안</span>에서 <span className="text-blue-300">[합치기]</span>로 수동 병합</p>
+                </div>
+              </div>
             </div>
             <div className="flex gap-2">
-              <span className="text-blue-400 font-bold shrink-0">2.</span>
-              <p><span className="text-gray-300">[추가 가져오기]</span> 버튼을 눌러 <span className="text-gray-300">FC/전투력 순위 스크린샷</span>을 추가 업로드합니다</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-blue-400 font-bold shrink-0">3.</span>
-              <p>닉네임이 자동 매칭되어 전투력/FC 데이터가 병합됩니다</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-yellow-400 font-bold shrink-0">4.</span>
-              <p>OCR 인식 차이로 매칭 안 된 멤버는 <span className="text-yellow-300">노란색 매칭 제안</span> 영역에서 <span className="text-blue-300">[합치기]</span> 버튼으로 수동 병합할 수 있습니다</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-green-400 font-bold shrink-0">5.</span>
+              <span className="text-green-400 font-bold shrink-0">Tip</span>
               <p>닉네임/전투력/FC레벨을 클릭하면 직접 수정 가능합니다</p>
             </div>
           </div>
@@ -366,10 +378,11 @@ export default function MembersPage() {
       )}
       {showGuide && allMembers.length > 0 && !mergeMode && (
         <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400 space-y-1.5">
-          <p><span className="text-blue-300">[추가 가져오기]</span> — FC/전투력 스크린샷을 추가로 업로드하여 기존 데이터에 병합</p>
+          <p><span className="text-blue-300">[추가 가져오기]</span> — 스크린샷 또는 엑셀을 추가 업로드하여 기존 데이터에 병합</p>
           <p><span className="text-yellow-300">매칭 제안</span> — OCR 인식 차이로 자동 매칭 안 된 멤버를 유사도 기반으로 제안. [합치기]로 수동 병합</p>
           <p><span className="text-gray-300">셀 클릭</span> — 닉네임, 전투력, FC레벨을 클릭하여 직접 수정 가능</p>
           <p><span className="text-green-300">[엑셀 다운로드]</span> — 현재 멤버 목록을 .xlsx 파일로 저장</p>
+          <p><span className="text-red-300">[초기화]</span> — 모든 멤버 데이터를 삭제하고 처음부터 다시 시작</p>
         </div>
       )}
 

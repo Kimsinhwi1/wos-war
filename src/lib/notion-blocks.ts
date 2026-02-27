@@ -112,6 +112,12 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
   if (doc.discordLink) {
     blocks.push(paragraph(text('디스코드: ', true), text(doc.discordLink, false, doc.discordLink)));
   }
+  blocks.push(
+    paragraph(
+      text('전략 사령부 계산기: ', true),
+      text('https://wos-war.vercel.app/calculator', false, 'https://wos-war.vercel.app/calculator'),
+    ),
+  );
   blocks.push(divider());
 
   // HAN Special Instructions (top placement)
@@ -258,6 +264,12 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
   // ============================================================
   blocks.push(divider());
   blocks.push(heading1('English Version'));
+  blocks.push(
+    paragraph(
+      text('Strategy Calculator: ', true),
+      text('https://wos-war.vercel.app/calculator', false, 'https://wos-war.vercel.app/calculator'),
+    ),
+  );
   blocks.push(divider());
 
   // Legendary Heroes (EN)

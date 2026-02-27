@@ -4,11 +4,17 @@ import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ── Types ──────────────────────────────────────────────
-interface Stats {
+interface TroopStats {
   atk: number;
   def: number;
-  lethality: number;
+  destruction: number;
   hp: number;
+}
+
+interface AllStats {
+  infantry: TroopStats;
+  lancer: TroopStats;
+  marksman: TroopStats;
 }
 
 interface TroopRatio {
@@ -17,7 +23,35 @@ interface TroopRatio {
   marksman: number;
 }
 
+interface TroopCounts {
+  infantry: number;
+  lancer: number;
+  marksman: number;
+}
+
 type Side = 'attack' | 'defense';
+type TroopType = 'infantry' | 'lancer' | 'marksman';
+
+const TROOP_LABELS: Record<TroopType, { ko: string; emoji: string; color: string }> = {
+  infantry: { ko: '방패병', emoji: '🛡️', color: 'red' },
+  lancer: { ko: '창병', emoji: '🔱', color: 'green' },
+  marksman: { ko: '궁병', emoji: '🏹', color: 'blue' },
+};
+
+const STAT_LABELS = [
+  { key: 'atk' as const, ko: '공격력' },
+  { key: 'def' as const, ko: '방어력' },
+  { key: 'destruction' as const, ko: '파괴력' },
+  { key: 'hp' as const, ko: 'HP' },
+];
+
+const DEFAULT_TROOP_STATS: TroopStats = { atk: 100, def: 100, destruction: 100, hp: 100 };
+const DEFAULT_TROOP_COUNTS: TroopCounts = { infantry: 60000, lancer: 20000, marksman: 20000 };
+const DEFAULT_ALL_STATS: AllStats = {
+  infantry: { ...DEFAULT_TROOP_STATS },
+  lancer: { ...DEFAULT_TROOP_STATS },
+  marksman: { ...DEFAULT_TROOP_STATS },
+};
 
 // ── Tactical Recommendation Data ──────────────────────
 const TACTICAL_TIERS = [
@@ -103,7 +137,7 @@ const TIER_STYLES = {
   },
 };
 
-// ── Helper: clamp ─────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────
 function clamp(val: number, min: number, max: number) {
   return Math.max(min, Math.min(max, val));
 }
@@ -113,73 +147,98 @@ function StatInput({
   label,
   value,
   onChange,
-  suffix = '%',
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
-  suffix?: string;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-20 shrink-0">
+      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-16 shrink-0">
         {label}
       </label>
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white text-right"
+        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white text-right"
         min={0}
-        max={999}
+        max={9999}
       />
-      <span className="text-xs text-gray-400 shrink-0">{suffix}</span>
+      <span className="text-xs text-gray-400 shrink-0">%</span>
     </div>
   );
 }
 
-// ── Troop Ratio Slider Component ──────────────────────
-function TroopSlider({
-  label,
-  emoji,
-  value,
-  color,
-  onChange,
+// ── Troop Stats Tab Panel ─────────────────────────────
+function TroopStatsPanel({
+  allStats,
+  setAllStats,
+  activeTab,
+  setActiveTab,
 }: {
-  label: string;
-  emoji: string;
-  value: number;
-  color: string;
-  onChange: (v: number) => void;
+  allStats: AllStats;
+  setAllStats: (s: AllStats) => void;
+  activeTab: TroopType;
+  setActiveTab: (t: TroopType) => void;
 }) {
+  const TABS: TroopType[] = ['infantry', 'lancer', 'marksman'];
+  const tabColors: Record<TroopType, { active: string; inactive: string }> = {
+    infantry: {
+      active: 'bg-red-500 text-white',
+      inactive: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+    },
+    lancer: {
+      active: 'bg-green-500 text-white',
+      inactive: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+    },
+    marksman: {
+      active: 'bg-blue-500 text-white',
+      inactive: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+    },
+  };
+
+  const currentStats = allStats[activeTab];
+
+  const updateStat = (key: keyof TroopStats, value: number) => {
+    setAllStats({
+      ...allStats,
+      [activeTab]: { ...currentStats, [key]: value },
+    });
+  };
+
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-600 dark:text-gray-400">
-          {emoji} {label}
-        </span>
-        <span className="text-xs font-mono font-bold text-gray-900 dark:text-white">
-          {value}%
-        </span>
+    <div className="space-y-3">
+      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        병종별 스탯
+      </p>
+
+      {/* Tabs */}
+      <div className="flex gap-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              activeTab === tab ? tabColors[tab].active : tabColors[tab].inactive
+            }`}
+          >
+            {TROOP_LABELS[tab].emoji} {TROOP_LABELS[tab].ko}
+          </button>
+        ))}
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-        style={{
-          background: `linear-gradient(to right, var(--slider-color) ${value}%, #d1d5db ${value}%)`,
-          // @ts-expect-error CSS custom property
-          '--slider-color':
-            color === 'red'
-              ? '#ef4444'
-              : color === 'green'
-                ? '#22c55e'
-                : '#3b82f6',
-        }}
-      />
+
+      {/* Stats for active tab */}
+      <div className="space-y-2 bg-white/50 dark:bg-gray-800/30 rounded-lg p-3">
+        {STAT_LABELS.map((stat) => (
+          <StatInput
+            key={stat.key}
+            label={stat.ko}
+            value={currentStats[stat.key]}
+            onChange={(v) => updateStat(stat.key, v)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -188,19 +247,19 @@ function TroopSlider({
 function SidePanel({
   title,
   theme,
-  stats,
-  setStats,
-  ratio,
-  setRatio,
+  allStats,
+  setAllStats,
+  troopCounts,
+  setTroopCounts,
   side,
   setSide,
 }: {
   title: string;
   theme: 'blue' | 'red';
-  stats: Stats;
-  setStats: (s: Stats) => void;
-  ratio: TroopRatio;
-  setRatio: (r: TroopRatio) => void;
+  allStats: AllStats;
+  setAllStats: (s: AllStats) => void;
+  troopCounts: TroopCounts;
+  setTroopCounts: (c: TroopCounts) => void;
   side: Side;
   setSide: (s: Side) => void;
 }) {
@@ -209,43 +268,25 @@ function SidePanel({
   const headerColor = theme === 'blue' ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400';
   const dot = theme === 'blue' ? '🔵' : '🔴';
 
-  const handleRatioChange = useCallback(
-    (field: keyof TroopRatio, newValue: number) => {
-      newValue = clamp(newValue, 0, 100);
-      const others = (Object.keys(ratio) as (keyof TroopRatio)[]).filter((k) => k !== field);
-      const remaining = 100 - newValue;
-      const otherSum = others.reduce((sum, k) => sum + ratio[k], 0);
+  const [activeTab, setActiveTab] = useState<TroopType>('infantry');
 
-      const updated = { ...ratio, [field]: newValue };
+  // 비율 자동 계산
+  const totalCount = troopCounts.infantry + troopCounts.lancer + troopCounts.marksman;
+  const ratioPercent = {
+    infantry: totalCount > 0 ? Math.round((troopCounts.infantry / totalCount) * 100) : 0,
+    lancer: totalCount > 0 ? Math.round((troopCounts.lancer / totalCount) * 100) : 0,
+    marksman: totalCount > 0 ? Math.round((troopCounts.marksman / totalCount) * 100) : 0,
+  };
 
-      if (otherSum === 0) {
-        const each = Math.floor(remaining / others.length);
-        const extra = remaining - each * others.length;
-        others.forEach((k, i) => {
-          updated[k] = each + (i === 0 ? extra : 0);
-        });
-      } else {
-        let distributed = 0;
-        others.forEach((k, i) => {
-          if (i === others.length - 1) {
-            updated[k] = remaining - distributed;
-          } else {
-            const proportion = ratio[k] / otherSum;
-            const val = Math.round(remaining * proportion);
-            updated[k] = val;
-            distributed += val;
-          }
-        });
-      }
+  const handleCountChange = (troop: TroopType, value: number) => {
+    setTroopCounts({ ...troopCounts, [troop]: Math.max(0, value) });
+  };
 
-      (Object.keys(updated) as (keyof TroopRatio)[]).forEach((k) => {
-        updated[k] = Math.max(0, updated[k]);
-      });
-
-      setRatio(updated);
-    },
-    [ratio, setRatio],
-  );
+  const TROOP_INPUT_CONFIG: { key: TroopType; label: string; emoji: string }[] = [
+    { key: 'infantry', label: '방패병', emoji: '🛡️' },
+    { key: 'lancer', label: '창병', emoji: '🔱' },
+    { key: 'marksman', label: '궁병', emoji: '🏹' },
+  ];
 
   return (
     <div className={`rounded-lg border-2 ${borderColor} ${bgColor} p-4 space-y-4`}>
@@ -253,47 +294,43 @@ function SidePanel({
         {dot} {title}
       </h3>
 
+      {/* Troop Stats Tabs */}
+      <TroopStatsPanel
+        allStats={allStats}
+        setAllStats={setAllStats}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+
+      {/* Troop Count Inputs */}
       <div className="space-y-2">
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          스탯 설정
+          병종별 투입 수 (총 {totalCount.toLocaleString()}명)
         </p>
-        <StatInput label="ATK (공격)" value={stats.atk} onChange={(v) => setStats({ ...stats, atk: v })} />
-        <StatInput label="DEF (방어)" value={stats.def} onChange={(v) => setStats({ ...stats, def: v })} />
-        <StatInput
-          label="치명타"
-          value={stats.lethality}
-          onChange={(v) => setStats({ ...stats, lethality: v })}
-        />
-        <StatInput label="HP (체력)" value={stats.hp} onChange={(v) => setStats({ ...stats, hp: v })} />
+        {TROOP_INPUT_CONFIG.map((troop) => (
+          <div key={troop.key} className="flex items-center gap-2">
+            <span className="text-xs text-gray-600 dark:text-gray-400 w-16 shrink-0">
+              {troop.emoji} {troop.label}
+            </span>
+            <input
+              type="number"
+              value={troopCounts[troop.key]}
+              onChange={(e) => handleCountChange(troop.key, Number(e.target.value) || 0)}
+              className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white text-right"
+              min={0}
+              step={1000}
+            />
+            <span className="text-xs text-gray-400 shrink-0 w-8 text-right font-mono">
+              {ratioPercent[troop.key]}%
+            </span>
+          </div>
+        ))}
+        <p className="text-[10px] text-gray-400 dark:text-gray-500">
+          현재 비율 — 방패: {ratioPercent.infantry}% / 창: {ratioPercent.lancer}% / 궁: {ratioPercent.marksman}%
+        </p>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          병종 비율 (합계: {ratio.infantry + ratio.lancer + ratio.marksman}%)
-        </p>
-        <TroopSlider
-          label="방패(보병)"
-          emoji="🛡️"
-          value={ratio.infantry}
-          color="red"
-          onChange={(v) => handleRatioChange('infantry', v)}
-        />
-        <TroopSlider
-          label="창병"
-          emoji="🔱"
-          value={ratio.lancer}
-          color="green"
-          onChange={(v) => handleRatioChange('lancer', v)}
-        />
-        <TroopSlider
-          label="궁병"
-          emoji="🏹"
-          value={ratio.marksman}
-          color="blue"
-          onChange={(v) => handleRatioChange('marksman', v)}
-        />
-      </div>
-
+      {/* Attack/Defense Toggle */}
       <div className="flex gap-2">
         <button
           onClick={() => setSide('attack')}
@@ -320,38 +357,105 @@ function SidePanel({
   );
 }
 
+// ── Calculation Helper ────────────────────────────────
+// 병종별 기본 스탯 가중치 (게임 내 체급 반영)
+const TROOP_WEIGHTS: Record<TroopType, { atk: number; def: number }> = {
+  infantry: { atk: 0.5, def: 2.0 },   // 방패병: 방어 특화
+  lancer:   { atk: 1.2, def: 1.2 },   // 창병: 균형
+  marksman: { atk: 1.5, def: 0.8 },   // 궁병: 공격 특화
+};
+
+function calcWeighted(stats: AllStats, ratio: TroopRatio, type: 'strike' | 'defense') {
+  const troops: TroopType[] = ['infantry', 'lancer', 'marksman'];
+  let total = 0;
+  const ratioSum = ratio.infantry + ratio.lancer + ratio.marksman;
+
+  for (const troop of troops) {
+    const s = stats[troop];
+    const w = TROOP_WEIGHTS[troop];
+    const ratioWeight = ratioSum > 0 ? ratio[troop] / ratioSum : 1 / 3;
+    if (type === 'strike') {
+      // 유효 타격 = (공격력% × 파괴력%) × 병종 공격 가중치
+      total += (s.atk / 100) * (s.destruction / 100) * w.atk * ratioWeight;
+    } else {
+      // 유효 방어 = (방어력% × HP%) × 병종 방어 가중치
+      total += (s.def / 100) * (s.hp / 100) * w.def * ratioWeight;
+    }
+  }
+  return total;
+}
+
 // ── Main Calculator Page ──────────────────────────────
 export default function CalculatorPage() {
   const router = useRouter();
 
-  const [allyStats, setAllyStats] = useState<Stats>({ atk: 100, def: 100, lethality: 100, hp: 100 });
-  const [allyRatio, setAllyRatio] = useState<TroopRatio>({ infantry: 40, lancer: 30, marksman: 30 });
+  const [allyStats, setAllyStats] = useState<AllStats>(() => ({
+    infantry: { ...DEFAULT_TROOP_STATS },
+    lancer: { ...DEFAULT_TROOP_STATS },
+    marksman: { ...DEFAULT_TROOP_STATS },
+  }));
+  const [allyCounts, setAllyCounts] = useState<TroopCounts>({ ...DEFAULT_TROOP_COUNTS });
   const [allySide, setAllySide] = useState<Side>('attack');
 
-  const [enemyStats, setEnemyStats] = useState<Stats>({ atk: 100, def: 100, lethality: 100, hp: 100 });
-  const [enemyRatio, setEnemyRatio] = useState<TroopRatio>({ infantry: 40, lancer: 30, marksman: 30 });
+  const [enemyStats, setEnemyStats] = useState<AllStats>(() => ({
+    infantry: { ...DEFAULT_TROOP_STATS },
+    lancer: { ...DEFAULT_TROOP_STATS },
+    marksman: { ...DEFAULT_TROOP_STATS },
+  }));
+  const [enemyCounts, setEnemyCounts] = useState<TroopCounts>({ ...DEFAULT_TROOP_COUNTS });
   const [enemySide, setEnemySide] = useState<Side>('defense');
 
-  const handleAllySideChange = useCallback(
-    (s: Side) => {
-      setAllySide(s);
-      setEnemySide(s === 'attack' ? 'defense' : 'attack');
-    },
-    [],
-  );
-  const handleEnemySideChange = useCallback(
-    (s: Side) => {
-      setEnemySide(s);
-      setAllySide(s === 'attack' ? 'defense' : 'attack');
-    },
-    [],
-  );
+  // 병력 수에서 비율 자동 계산
+  const allyRatio = useMemo<TroopRatio>(() => {
+    const total = allyCounts.infantry + allyCounts.lancer + allyCounts.marksman;
+    if (total === 0) return { infantry: 0, lancer: 0, marksman: 0 };
+    return {
+      infantry: (allyCounts.infantry / total) * 100,
+      lancer: (allyCounts.lancer / total) * 100,
+      marksman: (allyCounts.marksman / total) * 100,
+    };
+  }, [allyCounts]);
 
+  const enemyRatio = useMemo<TroopRatio>(() => {
+    const total = enemyCounts.infantry + enemyCounts.lancer + enemyCounts.marksman;
+    if (total === 0) return { infantry: 0, lancer: 0, marksman: 0 };
+    return {
+      infantry: (enemyCounts.infantry / total) * 100,
+      lancer: (enemyCounts.lancer / total) * 100,
+      marksman: (enemyCounts.marksman / total) * 100,
+    };
+  }, [enemyCounts]);
+
+  const handleAllySideChange = useCallback((s: Side) => {
+    setAllySide(s);
+    setEnemySide(s === 'attack' ? 'defense' : 'attack');
+  }, []);
+
+  const handleEnemySideChange = useCallback((s: Side) => {
+    setEnemySide(s);
+    setAllySide(s === 'attack' ? 'defense' : 'attack');
+  }, []);
+
+  // Calculate with weighted average + 방패병 붕괴 페널티
   const result = useMemo(() => {
-    const myStrike = (allyStats.atk / 100) * (allyStats.lethality / 100);
-    const myDefense = (allyStats.def / 100) * (allyStats.hp / 100);
-    const enemyStrike = (enemyStats.atk / 100) * (enemyStats.lethality / 100);
-    const enemyDefense = (enemyStats.def / 100) * (enemyStats.hp / 100);
+    const myStrike = calcWeighted(allyStats, allyRatio, 'strike');
+    let myDefense = calcWeighted(allyStats, allyRatio, 'defense');
+    const enemyStrike = calcWeighted(enemyStats, enemyRatio, 'strike');
+    let enemyDefense = calcWeighted(enemyStats, enemyRatio, 'defense');
+
+    // 방패병 붕괴 페널티: 방패병 비율 < 30%이면 방어력 30% 감소
+    const allyInfRatio = allyRatio.infantry + allyRatio.lancer + allyRatio.marksman > 0
+      ? (allyRatio.infantry / (allyRatio.infantry + allyRatio.lancer + allyRatio.marksman)) * 100
+      : 0;
+    const enemyInfRatio = enemyRatio.infantry + enemyRatio.lancer + enemyRatio.marksman > 0
+      ? (enemyRatio.infantry / (enemyRatio.infantry + enemyRatio.lancer + enemyRatio.marksman)) * 100
+      : 0;
+
+    const allyCollapse = allyInfRatio < 30;
+    const enemyCollapse = enemyInfRatio < 30;
+
+    if (allyCollapse) myDefense *= 0.7;
+    if (enemyCollapse) enemyDefense *= 0.7;
 
     const ratio =
       allySide === 'attack'
@@ -360,8 +464,8 @@ export default function CalculatorPage() {
 
     const tier = TACTICAL_TIERS.find((t) => ratio >= t.minRatio) ?? TACTICAL_TIERS[TACTICAL_TIERS.length - 1];
 
-    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier };
-  }, [allyStats, enemyStats, allySide]);
+    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier, allyCollapse, enemyCollapse };
+  }, [allyStats, allyRatio, enemyStats, enemyRatio, allySide]);
 
   const gaugePercent = clamp((result.ratio / (result.ratio + 1)) * 100, 5, 95);
   const style = TIER_STYLES[result.tier.color];
@@ -388,20 +492,20 @@ export default function CalculatorPage() {
         <SidePanel
           title="아군 (Ally)"
           theme="blue"
-          stats={allyStats}
-          setStats={setAllyStats}
-          ratio={allyRatio}
-          setRatio={setAllyRatio}
+          allStats={allyStats}
+          setAllStats={setAllyStats}
+          troopCounts={allyCounts}
+          setTroopCounts={setAllyCounts}
           side={allySide}
           setSide={handleAllySideChange}
         />
         <SidePanel
           title="적군 (Enemy)"
           theme="red"
-          stats={enemyStats}
-          setStats={setEnemyStats}
-          ratio={enemyRatio}
-          setRatio={setEnemyRatio}
+          allStats={enemyStats}
+          setAllStats={setEnemyStats}
+          troopCounts={enemyCounts}
+          setTroopCounts={setEnemyCounts}
           side={enemySide}
           setSide={handleEnemySideChange}
         />
@@ -431,6 +535,22 @@ export default function CalculatorPage() {
             </div>
           </div>
         </div>
+
+        {/* 방패병 붕괴 경고 */}
+        {(result.allyCollapse || result.enemyCollapse) && (
+          <div className="flex flex-col gap-1">
+            {result.allyCollapse && (
+              <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 rounded px-3 py-1.5">
+                {'⚠️'} 아군 방패병 비율 30% 미만 → 방어력 30% 감소 페널티 적용됨
+              </p>
+            )}
+            {result.enemyCollapse && (
+              <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 rounded px-3 py-1.5">
+                {'⚠️'} 적군 방패병 비율 30% 미만 → 방어력 30% 감소 페널티 적용됨
+              </p>
+            )}
+          </div>
+        )}
 
         {/* 유효 수치 */}
         <div className="grid grid-cols-2 gap-3">
@@ -502,9 +622,16 @@ export default function CalculatorPage() {
           {'📖'} 계산 공식 참고
         </summary>
         <div className="mt-3 space-y-2 text-xs text-gray-500 dark:text-gray-400 font-mono">
-          <p>Effective Strike = ATK(%) × Lethality(%)</p>
-          <p>Effective Defense = DEF(%) × HP(%)</p>
-          <p>Damage Ratio = My Strike / Enemy Defense</p>
+          <p className="font-semibold text-gray-600 dark:text-gray-300">병종별 가중치:</p>
+          <p>  방패병: 공격×0.5, 방어×2.0</p>
+          <p>  창 병: 공격×1.2, 방어×1.2</p>
+          <p>  궁 병: 공격×1.5, 방어×0.8</p>
+          <p className="mt-1 font-semibold text-gray-600 dark:text-gray-300">유효 지수:</p>
+          <p>  타격 = (공격력% × 파괴력%) × 가중치</p>
+          <p>  방어 = (방어력% × HP%) × 가중치</p>
+          <p className="mt-1">총합 = {'Σ'}(병종별 지수 × 비율)</p>
+          <p>교환비 = 아군 총 타격 / 적군 총 방어</p>
+          <p className="mt-1 text-orange-500">{'⚠️'} 방패병 {'<'} 30%: 방어력 -30% 페널티</p>
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
             <p>{'🟢'} {'>'} 1.2 : 단독 돌파 가능</p>
             <p>{'🟡'} 0.8 ~ 1.2 : 호각 (진형 유지)</p>

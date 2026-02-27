@@ -17,12 +17,6 @@ interface AllStats {
   marksman: TroopStats;
 }
 
-interface TroopRatio {
-  infantry: number;
-  lancer: number;
-  marksman: number;
-}
-
 interface TroopCounts {
   infantry: number;
   lancer: number;
@@ -57,51 +51,51 @@ const DEFAULT_ALL_STATS: AllStats = {
 const TACTICAL_TIERS = [
   {
     id: 'dominant',
-    minRatio: 1.2,
+    minRatio: 1.3,
     color: 'green' as const,
     emoji: '🟢',
-    titleKo: '단독 집결 돌파 가능',
-    titleEn: 'Solo Rally Breakthrough',
-    guideKo:
-      '적과 체급 차이가 납니다. 단일 집결만으로도 확정적으로 적의 방어선을 붕괴시킬 수 있습니다.',
-    setupKo:
-      "공격 대장의 첫 칸 영웅을 '제시' 또는 '서윤'으로 고정하세요. 타격 극대화를 위해 방패:창:궁 비율을 1.5 : 1 : 1 정도로 세팅해도 무방합니다.",
+    titleKo: '압승! (단독 타격으로 적 방어선 붕괴)',
+    titleEn: 'Dominant Victory - Solo Rally Breakthrough',
+    whyKo:
+      '아군의 유효 타격량이 적의 방어 체급을 크게 상회합니다. 이 경우 적의 1열(방패병)이 데미지를 버티지 못하고 초반 라운드에 순식간에 녹아내립니다. 1열이 무너진 적의 딜러진(창/궁병)은 딜을 제대로 넣기도 전에 전멸하므로, 아군의 피해는 최소화되면서 일방적인 학살(스노우볼)이 발생합니다.',
+    tacticKo:
+      '추가 랠리 없이 현재의 단일 집결만으로도 확정적으로 적을 뚫어낼 수 있습니다.',
   },
   {
     id: 'even',
     minRatio: 0.8,
     color: 'yellow' as const,
     emoji: '🟡',
-    titleKo: '정면 승부 - 진형 유지와 영웅 스위칭',
-    titleEn: 'Head-on Fight - Formation & Hero Switching',
-    guideKo:
-      '비슷한 스펙입니다. 수성 시에는 방패병 소모가 극심하므로, 방패병 비율을 최소 50~60%(2:1:1 또는 3:1:1)로 세팅하여 1열 유지력을 확보하세요.',
-    setupKo:
-      "수성 시 첫 칸 영웅은 체력 버프가 있는 '패트릭'을 적극 기용하세요 (필리는 데미지 감소 버프를 덮어씌우므로 1명 이하로 통제). 집결 참여자의 불의수정 레벨을 최대한 높게 통제해야 합니다.",
+    titleKo: '호각/백중세 (소모전 양상)',
+    titleEn: 'Even Match - War of Attrition',
+    whyKo:
+      '양측의 공방 스펙이 팽팽하여 1열(방패병)이 여러 라운드 동안 끈질기게 버티는 양상입니다. 전투가 장기전(소모전)으로 흘러가게 되며, 4세대 영웅의 스킬 발동 확률(운)이나 어느 쪽 방패병이 한 턴이라도 더 오래 살아남느냐에 따라 승패가 갈립니다.',
+    tacticKo:
+      '승리하더라도 양측 모두 막대한 부상자와 전사자가 발생합니다. 1열 유지력을 극대화하기 위해 방패병 비율을 50~60% 이상으로 꽉 채우세요.',
   },
   {
     id: 'disadvantage',
     minRatio: 0.5,
     color: 'orange' as const,
     emoji: '🟠',
-    titleKo: "정면 돌파 불가 - '연속 타격(다중 랠리)' 전술 요망",
-    titleEn: 'No Frontal Breakthrough - Multi-Rally Tactic Required',
-    guideKo:
-      "단일 타격으로는 절대 뚫을 수 없습니다. 상대의 방패병 비율을 강제로 무너뜨리는 '연속 타격' 전술을 사용하세요.",
-    setupKo:
-      '서브 집결장이 먼저 공격(1차 타격)하여 적의 방패병을 소진시킨 직후, 5초 이내의 시차로 가장 강한 메인 집결장이 본대(2차 타격)를 꽂아 넣어 진형을 파괴해야 합니다.',
+    titleKo: '불리함 (정면 돌파 실패)',
+    titleEn: 'Disadvantage - Frontal Assault Failure',
+    whyKo:
+      '적의 방어선이 너무 견고하거나 상대 타격력이 강해, 아군의 방패병이 먼저 전멸하게 됩니다. 방패병이 무너지는 순간 전투는 패배로 직결되므로 단일 집결로는 절대 뚫을 수 없습니다. 단, 적에게 유의미한 병력 손실(방패병 소모)은 입힐 수 있는 수치입니다.',
+    tacticKo:
+      "1차 서브 집결을 먼저 충돌시켜 적의 방패병을 깎아낸 뒤, 5초 이내에 가장 강한 메인 집결을 꽂아 넣는 '다중 랠리(연속 타격)' 전술로 방어선을 강제 철거해야 합니다.",
   },
   {
     id: 'critical',
     minRatio: 0,
     color: 'red' as const,
     emoji: '🔴',
-    titleKo: "체급 극복 - 2개 연맹 연계 '카운터 랠리' 필수",
-    titleEn: 'Weight Class Gap - Dual Alliance Counter Rally Required',
-    guideKo:
-      "스펙이 너무 밀려 일반적인 공수 교대가 불가능합니다. 서브 연맹을 활용한 '카운터 랠리(교차 집결)' 전술을 준비하세요.",
-    setupKo:
-      '적이 우리 건물을 점령하도록 유도하십시오. 점령 직후는 수성 영웅이 미적용되고 방패병이 소진된 가장 취약한 상태입니다. 적 집결이 도착하기 전에 미리 시간을 계산하여, 적 도착 후 5초 뒤에 우리 서브 연맹의 집결 타격이 들어가도록 설계해 즉시 탈환해야 합니다.',
+    titleKo: '매우 불리 (참패 확정)',
+    titleEn: 'Critical - Defeat Guaranteed',
+    whyKo:
+      '체급 차이가 절망적인 수준입니다. 아군의 타격이 적 1열에 생채기조차 내지 못하며, 반대로 아군 1열은 시작과 동시에 삭제당합니다. 정면 공격은 아무런 전략적 이득이 없는 무의미한 병력(전사자) 낭비일 뿐입니다.',
+    tacticKo:
+      "정면 승부는 절대 피하십시오. 적이 아군 건물을 점령하여 수성 버프가 꺼지고 방패병이 가장 많이 소진된 찰나의 취약한 타이밍을 노려 빈집을 털어버리는 '카운터 랠리' 외에는 승산이 없습니다.",
   },
 ];
 
@@ -358,29 +352,17 @@ function SidePanel({
 }
 
 // ── Calculation Helper ────────────────────────────────
-// 병종별 기본 스탯 가중치 (게임 내 체급 반영)
-const TROOP_WEIGHTS: Record<TroopType, { atk: number; def: number }> = {
-  infantry: { atk: 0.5, def: 2.0 },   // 방패병: 방어 특화
-  lancer:   { atk: 1.2, def: 1.2 },   // 창병: 균형
-  marksman: { atk: 1.5, def: 0.8 },   // 궁병: 공격 특화
-};
-
-function calcWeighted(stats: AllStats, ratio: TroopRatio, type: 'strike' | 'defense') {
+// 순수 스탯 배율 × 병력 수 기반 전투력 산출 (인위적 가중치 없음)
+// 배율 변환: 100% → (1 + 100/100) = 2.0배, 250% → 3.5배
+function calcTotalIndex(stats: AllStats, counts: TroopCounts, type: 'strike' | 'defense') {
   const troops: TroopType[] = ['infantry', 'lancer', 'marksman'];
   let total = 0;
-  const ratioSum = ratio.infantry + ratio.lancer + ratio.marksman;
-
   for (const troop of troops) {
     const s = stats[troop];
-    const w = TROOP_WEIGHTS[troop];
-    const ratioWeight = ratioSum > 0 ? ratio[troop] / ratioSum : 1 / 3;
-    if (type === 'strike') {
-      // 유효 타격 = (공격력% × 파괴력%) × 병종 공격 가중치
-      total += (s.atk / 100) * (s.destruction / 100) * w.atk * ratioWeight;
-    } else {
-      // 유효 방어 = (방어력% × HP%) × 병종 방어 가중치
-      total += (s.def / 100) * (s.hp / 100) * w.def * ratioWeight;
-    }
+    const multiplier = type === 'strike'
+      ? (1 + s.atk / 100) * (1 + s.destruction / 100)
+      : (1 + s.def / 100) * (1 + s.hp / 100);
+    total += counts[troop] * multiplier;
   }
   return total;
 }
@@ -405,27 +387,6 @@ export default function CalculatorPage() {
   const [enemyCounts, setEnemyCounts] = useState<TroopCounts>({ ...DEFAULT_TROOP_COUNTS });
   const [enemySide, setEnemySide] = useState<Side>('defense');
 
-  // 병력 수에서 비율 자동 계산
-  const allyRatio = useMemo<TroopRatio>(() => {
-    const total = allyCounts.infantry + allyCounts.lancer + allyCounts.marksman;
-    if (total === 0) return { infantry: 0, lancer: 0, marksman: 0 };
-    return {
-      infantry: (allyCounts.infantry / total) * 100,
-      lancer: (allyCounts.lancer / total) * 100,
-      marksman: (allyCounts.marksman / total) * 100,
-    };
-  }, [allyCounts]);
-
-  const enemyRatio = useMemo<TroopRatio>(() => {
-    const total = enemyCounts.infantry + enemyCounts.lancer + enemyCounts.marksman;
-    if (total === 0) return { infantry: 0, lancer: 0, marksman: 0 };
-    return {
-      infantry: (enemyCounts.infantry / total) * 100,
-      lancer: (enemyCounts.lancer / total) * 100,
-      marksman: (enemyCounts.marksman / total) * 100,
-    };
-  }, [enemyCounts]);
-
   const handleAllySideChange = useCallback((s: Side) => {
     setAllySide(s);
     setEnemySide(s === 'attack' ? 'defense' : 'attack');
@@ -436,36 +397,31 @@ export default function CalculatorPage() {
     setAllySide(s === 'attack' ? 'defense' : 'attack');
   }, []);
 
-  // Calculate with weighted average + 방패병 붕괴 페널티
+  // 순수 스탯 × 병력 수 기반 교환비 계산 (스노우볼 효과 포함)
   const result = useMemo(() => {
-    const myStrike = calcWeighted(allyStats, allyRatio, 'strike');
-    let myDefense = calcWeighted(allyStats, allyRatio, 'defense');
-    const enemyStrike = calcWeighted(enemyStats, enemyRatio, 'strike');
-    let enemyDefense = calcWeighted(enemyStats, enemyRatio, 'defense');
+    const myStrike = calcTotalIndex(allyStats, allyCounts, 'strike');
+    const myDefense = calcTotalIndex(allyStats, allyCounts, 'defense');
+    const enemyStrike = calcTotalIndex(enemyStats, enemyCounts, 'strike');
+    const enemyDefense = calcTotalIndex(enemyStats, enemyCounts, 'defense');
 
-    // 방패병 붕괴 페널티: 방패병 비율 < 30%이면 방어력 30% 감소
-    const allyInfRatio = allyRatio.infantry + allyRatio.lancer + allyRatio.marksman > 0
-      ? (allyRatio.infantry / (allyRatio.infantry + allyRatio.lancer + allyRatio.marksman)) * 100
-      : 0;
-    const enemyInfRatio = enemyRatio.infantry + enemyRatio.lancer + enemyRatio.marksman > 0
-      ? (enemyRatio.infantry / (enemyRatio.infantry + enemyRatio.lancer + enemyRatio.marksman)) * 100
-      : 0;
-
-    const allyCollapse = allyInfRatio < 30;
-    const enemyCollapse = enemyInfRatio < 30;
-
-    if (allyCollapse) myDefense *= 0.7;
-    if (enemyCollapse) enemyDefense *= 0.7;
-
-    const ratio =
+    // 기본 교환비
+    const baseRatio =
       allySide === 'attack'
         ? enemyDefense > 0 ? myStrike / enemyDefense : 99
         : enemyStrike > 0 ? myDefense / enemyStrike : 99;
 
+    // 병력 체급 비 (스노우볼 보정)
+    const allyTotal = allyCounts.infantry + allyCounts.lancer + allyCounts.marksman;
+    const enemyTotal = enemyCounts.infantry + enemyCounts.lancer + enemyCounts.marksman;
+    const troopWeightRatio = enemyTotal > 0 ? allyTotal / enemyTotal : 1;
+
+    // 최종 교환비 = 기본교환비 × (체급비)^1.5
+    const ratio = baseRatio * Math.pow(troopWeightRatio, 1.5);
+
     const tier = TACTICAL_TIERS.find((t) => ratio >= t.minRatio) ?? TACTICAL_TIERS[TACTICAL_TIERS.length - 1];
 
-    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier, allyCollapse, enemyCollapse };
-  }, [allyStats, allyRatio, enemyStats, enemyRatio, allySide]);
+    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier, baseRatio, troopWeightRatio };
+  }, [allyStats, allyCounts, enemyStats, enemyCounts, allySide]);
 
   const gaugePercent = clamp((result.ratio / (result.ratio + 1)) * 100, 5, 95);
   const style = TIER_STYLES[result.tier.color];
@@ -536,44 +492,37 @@ export default function CalculatorPage() {
           </div>
         </div>
 
-        {/* 방패병 붕괴 경고 */}
-        {(result.allyCollapse || result.enemyCollapse) && (
-          <div className="flex flex-col gap-1">
-            {result.allyCollapse && (
-              <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 rounded px-3 py-1.5">
-                {'⚠️'} 아군 방패병 비율 30% 미만 → 방어력 30% 감소 페널티 적용됨
-              </p>
-            )}
-            {result.enemyCollapse && (
-              <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 rounded px-3 py-1.5">
-                {'⚠️'} 적군 방패병 비율 30% 미만 → 방어력 30% 감소 페널티 적용됨
-              </p>
-            )}
-          </div>
-        )}
-
         {/* 유효 수치 */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-center">
             <p className="text-xs text-blue-500 dark:text-blue-400 mb-1">
-              {allySide === 'attack' ? '아군 유효 타격' : '아군 유효 방어'}
+              {allySide === 'attack' ? '아군 총 타격 지수' : '아군 총 방어 지수'}
             </p>
             <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
               {allySide === 'attack'
-                ? (result.myStrike * 100).toFixed(1)
-                : (result.myDefense * 100).toFixed(1)}
+                ? Math.round(result.myStrike).toLocaleString()
+                : Math.round(result.myDefense).toLocaleString()}
             </p>
           </div>
           <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-3 text-center">
             <p className="text-xs text-red-500 dark:text-red-400 mb-1">
-              {allySide === 'attack' ? '적군 유효 방어' : '적군 유효 타격'}
+              {allySide === 'attack' ? '적군 총 방어 지수' : '적군 총 타격 지수'}
             </p>
             <p className="text-lg font-bold text-red-700 dark:text-red-300">
               {allySide === 'attack'
-                ? (result.enemyDefense * 100).toFixed(1)
-                : (result.enemyStrike * 100).toFixed(1)}
+                ? Math.round(result.enemyDefense).toLocaleString()
+                : Math.round(result.enemyStrike).toLocaleString()}
             </p>
           </div>
+        </div>
+
+        {/* 상세 비율 */}
+        <div className="flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+          <span>기본 교환비: {result.baseRatio.toFixed(2)}</span>
+          <span>{'×'}</span>
+          <span>체급비^1.5: {Math.pow(result.troopWeightRatio, 1.5).toFixed(2)}</span>
+          <span>{'='}</span>
+          <span className="font-bold text-gray-700 dark:text-gray-200">최종: {result.ratio.toFixed(2)}</span>
         </div>
       </div>
 
@@ -590,21 +539,19 @@ export default function CalculatorPage() {
         <div className="space-y-3">
           <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-              {'📋'} 전술 가이드
+              {'📋'} 판정 이유
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-              {result.tier.guideKo}
+              {result.tier.whyKo}
             </p>
           </div>
 
           <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-              {result.tier.id === 'disadvantage' || result.tier.id === 'critical'
-                ? '🎯 실행 방법'
-                : '🦸 영웅/병종 세팅'}
+              {'🎯'} 전술
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-              {result.tier.setupKo}
+              {result.tier.tacticKo}
             </p>
           </div>
         </div>
@@ -622,19 +569,19 @@ export default function CalculatorPage() {
           {'📖'} 계산 공식 참고
         </summary>
         <div className="mt-3 space-y-2 text-xs text-gray-500 dark:text-gray-400 font-mono">
-          <p className="font-semibold text-gray-600 dark:text-gray-300">병종별 가중치:</p>
-          <p>  방패병: 공격×0.5, 방어×2.0</p>
-          <p>  창 병: 공격×1.2, 방어×1.2</p>
-          <p>  궁 병: 공격×1.5, 방어×0.8</p>
-          <p className="mt-1 font-semibold text-gray-600 dark:text-gray-300">유효 지수:</p>
-          <p>  타격 = (공격력% × 파괴력%) × 가중치</p>
-          <p>  방어 = (방어력% × HP%) × 가중치</p>
-          <p className="mt-1">총합 = {'Σ'}(병종별 지수 × 비율)</p>
-          <p>교환비 = 아군 총 타격 / 적군 총 방어</p>
-          <p className="mt-1 text-orange-500">{'⚠️'} 방패병 {'<'} 30%: 방어력 -30% 페널티</p>
+          <p className="font-semibold text-gray-600 dark:text-gray-300">1. 스탯 배율 변환 (100% = 기본 1.0배):</p>
+          <p>  타격 배율 = (1 + 공격력/100) × (1 + 파괴력/100)</p>
+          <p>  방어 배율 = (1 + 방어력/100) × (1 + HP/100)</p>
+          <p>  예: 250% → (1 + 250/100) = 3.5배</p>
+          <p className="mt-1 font-semibold text-gray-600 dark:text-gray-300">2. 총 전투력 지수 (병력 수 반영):</p>
+          <p>  총 지수 = {'Σ'}(병종별 병력 수 × 해당 배율)</p>
+          <p className="mt-1 font-semibold text-gray-600 dark:text-gray-300">3. 최종 교환비 (스노우볼 효과):</p>
+          <p>  기본 교환비 = 아군 타격 지수 / 적군 방어 지수</p>
+          <p>  병력 체급 비 = 아군 총 병력 / 적군 총 병력</p>
+          <p>  최종 = 기본교환비 × (체급비)^1.5</p>
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p>{'🟢'} {'>'} 1.2 : 단독 돌파 가능</p>
-            <p>{'🟡'} 0.8 ~ 1.2 : 호각 (진형 유지)</p>
+            <p>{'🟢'} {'>'} 1.3 : 압승 (단독 돌파)</p>
+            <p>{'🟡'} 0.8 ~ 1.3 : 호각 (소모전)</p>
             <p>{'🟠'} 0.5 ~ 0.8 : 불리 (다중 랠리)</p>
             <p>{'🔴'} {'<'} 0.5 : 매우 불리 (카운터 랠리)</p>
           </div>

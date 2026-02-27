@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Stepper from './Stepper';
 import { useStrategyStore } from '@/store/strategy-store';
 
@@ -21,6 +22,13 @@ export default function Header() {
             <span className="text-xs text-gray-400 dark:text-gray-500">
               {allianceSettings.serverNumber} {allianceSettings.allianceName} Alliance {allianceSettings.leaderNickname}
             </span>
+            <Link
+              href="/calculator"
+              className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+              title="전투 교환비 시뮬레이터"
+            >
+              {'\uD83E\uDDEE'}
+            </Link>
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -45,7 +53,7 @@ export default function Header() {
                 닫기
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">연맹 이니셜</label>
                 <input
@@ -86,6 +94,16 @@ export default function Header() {
                   placeholder="KOR"
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">디스코드 링크</label>
+              <input
+                type="text"
+                value={allianceSettings.discordLink}
+                onChange={(e) => updateAllianceSettings({ discordLink: e.target.value })}
+                className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-gray-100"
+                placeholder="https://discord.gg/..."
+              />
             </div>
           </div>
         </div>

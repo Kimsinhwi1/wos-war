@@ -109,7 +109,9 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
 
   // Date + Discord
   blocks.push(paragraph(text(`\uD83D\uDCC5 최종 수정 / Last Updated: ${doc.lastUpdated}`)));
-  blocks.push(paragraph(text('HAN 디스코드: ', true), text(doc.discordLink, false, doc.discordLink)));
+  if (doc.discordLink) {
+    blocks.push(paragraph(text('디스코드: ', true), text(doc.discordLink, false, doc.discordLink)));
+  }
   blocks.push(divider());
 
   // HAN Special Instructions (top placement)

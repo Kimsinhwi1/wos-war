@@ -448,7 +448,7 @@ export const useStrategyStore = create<StrategyStore>()(
         return {
           title: `SVS 캐슬전투 최종 전략서 (${allianceName})`,
           lastUpdated: new Date().toISOString().split('T')[0],
-          discordLink: 'https://discord.gg/CXXAGgEgm7',
+          discordLink: state.allianceSettings.discordLink,
           legendaryHeroes,
           rallyTypes: state.rallyConfigs,
           counterMatrix: DEFAULT_COUNTER_MATRIX,

@@ -669,4 +669,5 @@ export const DEFAULT_ALLIANCE_SETTINGS = {
   serverNumber: '#3074',
   leaderNickname: '집냥이',
   partnerAlliance: 'KOR',
+  discordLink: '',
 } as const;

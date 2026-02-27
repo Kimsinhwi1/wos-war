@@ -224,6 +224,7 @@ export interface AllianceSettings {
   serverNumber: string;       // e.g. "#3074"
   leaderNickname: string;     // e.g. "집냥이"
   partnerAlliance: string;    // e.g. "KOR"
+  discordLink: string;        // e.g. "https://discord.gg/..."
 }
 
 // ============================================================

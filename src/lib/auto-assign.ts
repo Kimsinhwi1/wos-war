@@ -5,6 +5,7 @@ import { generateId } from './utils';
 const TARGET_RALLY_SIZE = 12;
 const MIN_RALLY_SIZE = 9;
 const SUBS_PER_RALLY = 2;
+const SUBSTITUTE_LEADER_COUNT = 2;
 
 /**
  * Auto-assign FC5 members into rally groups (9~12 members each)
@@ -42,8 +43,12 @@ export function autoAssignMembers(
       return a.deepDiveRank - b.deepDiveRank;
     });
 
-  // Top 2 → Rally Leaders
-  const [mainLeader, subLeader, ...remaining] = fc5Members;
+  // Top 2 → Rally Leaders, next 2 → Substitute Leaders
+  const [mainLeader, subLeader, ...afterLeaders] = fc5Members;
+
+  // Take substitute leaders from the next ranked members
+  const substituteLeaders = afterLeaders.slice(0, SUBSTITUTE_LEADER_COUNT);
+  const remaining = afterLeaders.slice(SUBSTITUTE_LEADER_COUNT);
 
   const rallyLeaders: RallyLeaderAssignment = {
     main: {
@@ -56,7 +61,11 @@ export function autoAssignMembers(
       nickname: subLeader?.nickname ?? '',
       combatPower: subLeader?.combatPower ?? '',
     },
-    substitutes: [],
+    substitutes: substituteLeaders.map((m) => ({
+      memberId: m.id,
+      nickname: m.nickname,
+      combatPower: m.combatPower,
+    })),
   };
 
   // Calculate optimal number of rally groups
@@ -93,6 +102,10 @@ export function autoAssignMembers(
   if (subLeader) {
     assignedMembers.push({ ...subLeader, group: 'castle' });
   }
+  // Mark substitute leaders
+  substituteLeaders.forEach((m) => {
+    assignedMembers.push({ ...m, group: 'castle' });
+  });
 
   // Create rally groups
   for (let i = 0; i < numRallyGroups; i++) {
@@ -138,6 +151,7 @@ export function autoAssignMembers(
       members: squadMembers,
       substitutes: groupSubs,
       joinerHero: isDefense ? defenseHeroId! : 'jessie',
+      rallyLeaderId: isDefense ? mainLeader?.id : subLeader?.id,
     });
   }
 
@@ -167,6 +181,8 @@ export function autoAssignMembers(
 
       assignedMembers.push(...turretMembers);
 
+      // Turret rally leaders: substitute1 → substitute2 → cycle
+      const turretLeaderId = substituteLeaders[i % substituteLeaders.length]?.id;
       squads.push({
         id: squadId,
         name: `포탑 ${i + 1}집결`,
@@ -175,6 +191,7 @@ export function autoAssignMembers(
         members: turretMembers,
         substitutes: [],
         joinerHero: 'patrick',
+        rallyLeaderId: turretLeaderId,
       });
     }
   } else {

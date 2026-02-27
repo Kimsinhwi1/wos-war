@@ -63,6 +63,7 @@ interface StrategyStore {
   moveSquadMember: (memberId: string, toSquadId: string) => void;
   updateSquadRole: (squadId: string, role: SquadRole) => void;
   updateSquadJoinerHero: (squadId: string, heroId: string) => void;
+  updateSquadRallyLeader: (squadId: string, leaderId: string | undefined) => void;
 
   // Step 3: Rally Config
   rallyConfigs: RallyType[];
@@ -261,6 +262,12 @@ export const useStrategyStore = create<StrategyStore>()(
         set((state) => ({
           squads: state.squads.map((s) =>
             s.id === squadId ? { ...s, joinerHero: heroId } : s,
+          ),
+        })),
+      updateSquadRallyLeader: (squadId, leaderId) =>
+        set((state) => ({
+          squads: state.squads.map((s) =>
+            s.id === squadId ? { ...s, rallyLeaderId: leaderId } : s,
           ),
         })),
       moveSquadMember: (memberId, toSquadId) =>

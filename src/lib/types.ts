@@ -73,6 +73,7 @@ export interface Squad {
   members: AssignedMember[];
   substitutes: AssignedMember[];
   joinerHero: string;
+  rallyLeaderId?: string;  // 이 스쿼드를 리딩하는 집결장 멤버 ID
 }
 
 // ============================================================

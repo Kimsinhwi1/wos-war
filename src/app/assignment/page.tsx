@@ -27,6 +27,7 @@ export default function AssignmentPage() {
     moveSquadMember,
     updateSquadRole,
     updateSquadJoinerHero,
+    updateSquadRallyLeader,
   } = useStrategyStore();
 
   const [dragMemberId, setDragMemberId] = useState<string | null>(null);
@@ -242,7 +243,8 @@ export default function AssignmentPage() {
             <p className="text-xs text-gray-400 dark:text-gray-500">닉네임을 드래그하여 다른 조로 이동</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            {squads.filter((s) => s.role !== 'turret').map((squad) => (
+            {squads.filter((s) => s.role !== 'turret').map((squad) => {
+              return (
               <div
                 key={squad.id}
                 onDragOver={(e) => handleDragOver(e, squad.id)}
@@ -265,14 +267,40 @@ export default function AssignmentPage() {
                       {squad.members.length}명
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Rally leader selector */}
+                    <select
+                      value={squad.rallyLeaderId ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value || undefined;
+                        updateSquadRallyLeader(squad.id, val);
+                        const leaderName = [rallyLeaders?.main, rallyLeaders?.sub, ...(rallyLeaders?.substitutes ?? [])]
+                          .find((l) => l?.memberId === val)?.nickname;
+                        toast.success(`집결장: ${leaderName ?? '미지정'}`);
+                      }}
+                      className={`text-xs border rounded px-2 py-1 ${
+                        squad.role === 'defense'
+                          ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-200'
+                          : 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-600 text-red-800 dark:text-red-200'
+                      }`}
+                    >
+                      <option value="">집결장 선택...</option>
+                      {rallyLeaders?.main.memberId && (
+                        <option value={rallyLeaders.main.memberId}>메인: {rallyLeaders.main.nickname}</option>
+                      )}
+                      {rallyLeaders?.sub.memberId && (
+                        <option value={rallyLeaders.sub.memberId}>서브: {rallyLeaders.sub.nickname}</option>
+                      )}
+                      {rallyLeaders?.substitutes?.map((s, i) => (
+                        s.memberId && <option key={s.memberId} value={s.memberId}>대체{i + 1}: {s.nickname}</option>
+                      ))}
+                    </select>
                     {/* Role selector */}
                     <select
                       value={squad.role}
                       onChange={(e) => {
                         const newRole = e.target.value as SquadRole;
                         updateSquadRole(squad.id, newRole);
-                        // Auto-switch joiner hero when role changes
                         if (newRole === 'defense' && squad.joinerHero === 'jessie') {
                           updateSquadJoinerHero(squad.id, 'patrick');
                         } else if (newRole === 'counter' && squad.joinerHero !== 'jessie') {
@@ -367,7 +395,8 @@ export default function AssignmentPage() {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         </section>
       )}
@@ -384,11 +413,7 @@ export default function AssignmentPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            {squads.filter((s) => s.role === 'turret').map((squad, idx) => {
-              // Map turret rally leaders: sub → substitute1 → substitute2
-              const turretLeader = idx === 0
-                ? rallyLeaders?.sub
-                : rallyLeaders?.substitutes?.[idx - 1];
+            {squads.filter((s) => s.role === 'turret').map((squad) => {
               return (
                 <div
                   key={squad.id}
@@ -403,10 +428,30 @@ export default function AssignmentPage() {
                         {squad.members.length}명
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-purple-600 dark:text-purple-400">
-                        집결장: {turretLeader?.nickname ?? '미지정'}
-                      </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Rally leader selector for turret */}
+                      <select
+                        value={squad.rallyLeaderId ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value || undefined;
+                          updateSquadRallyLeader(squad.id, val);
+                          const leaderName = [rallyLeaders?.main, rallyLeaders?.sub, ...(rallyLeaders?.substitutes ?? [])]
+                            .find((l) => l?.memberId === val)?.nickname;
+                          toast.success(`집결장: ${leaderName ?? '미지정'}`);
+                        }}
+                        className="text-xs bg-purple-100 dark:bg-purple-900/40 border border-purple-300 dark:border-purple-600 rounded px-2 py-1 text-purple-800 dark:text-purple-200"
+                      >
+                        <option value="">집결장 선택...</option>
+                        {rallyLeaders?.main.memberId && (
+                          <option value={rallyLeaders.main.memberId}>메인: {rallyLeaders.main.nickname}</option>
+                        )}
+                        {rallyLeaders?.sub.memberId && (
+                          <option value={rallyLeaders.sub.memberId}>서브: {rallyLeaders.sub.nickname}</option>
+                        )}
+                        {rallyLeaders?.substitutes?.map((s, i) => (
+                          s.memberId && <option key={s.memberId} value={s.memberId}>대체{i + 1}: {s.nickname}</option>
+                        ))}
+                      </select>
                       {/* Joiner hero selector */}
                       <select
                         value={squad.joinerHero}

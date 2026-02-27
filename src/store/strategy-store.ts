@@ -496,11 +496,6 @@ export const useStrategyStore = create<StrategyStore>()(
           });
 
           return {
-            allianceSettings: {
-              ...state.allianceSettings,
-              allianceName: b,
-              partnerAlliance: a,
-            },
             strategies: state.strategies.map((s) => ({
               ...s,
               nameKo: swap(s.nameKo),

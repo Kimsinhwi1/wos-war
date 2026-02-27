@@ -92,6 +92,7 @@ interface StrategyStore {
 
   // Alliance Swap
   swapAlliances: () => void;
+  resetStrategyContent: () => void;
 
   // Step 5: Export
   generateDocument: () => StrategyDocument;
@@ -527,6 +528,55 @@ export const useStrategyStore = create<StrategyStore>()(
               ...ci,
               textKo: swap(ci.textKo),
               textEn: swap(ci.textEn),
+            })),
+          };
+        }),
+
+      // Reset strategy content to defaults with current alliance names
+      resetStrategyContent: () =>
+        set((state) => {
+          const a = state.allianceSettings.allianceName || 'HAN';
+          const b = state.allianceSettings.partnerAlliance || 'KOR';
+
+          const r = (text: string): string =>
+            text.split('HAN').join('__A__').split('KOR').join(b).split('__A__').join(a);
+
+          const rStep = (step: StrategyStep): StrategyStep => ({
+            ...step,
+            descriptionKo: r(step.descriptionKo),
+            descriptionEn: r(step.descriptionEn),
+            subSteps: step.subSteps?.map(rStep),
+          });
+
+          return {
+            strategies: DEFAULT_STRATEGIES.map((s) => ({
+              ...s,
+              nameKo: r(s.nameKo),
+              nameEn: r(s.nameEn),
+              conditionKo: r(s.conditionKo),
+              conditionEn: r(s.conditionEn),
+              steps: s.steps.map(rStep),
+            })),
+            activeStrategies: ['A', 'B', 'C'] as StrategyTemplateId[],
+            callSigns: DEFAULT_CALL_SIGNS.map((cs) => ({
+              ...cs,
+              situationKo: r(cs.situationKo),
+              situationEn: r(cs.situationEn),
+              caller: r(cs.caller),
+              messageKo: r(cs.messageKo),
+              messageEn: r(cs.messageEn),
+            })),
+            hanSpecialInstructions: DEFAULT_HAN_INSTRUCTIONS.map((inst) => ({
+              ...inst,
+              titleKo: r(inst.titleKo),
+              titleEn: r(inst.titleEn),
+              contentKo: r(inst.contentKo),
+              contentEn: r(inst.contentEn),
+            })),
+            checklist: DEFAULT_CHECKLIST.map((ci) => ({
+              ...ci,
+              textKo: r(ci.textKo),
+              textEn: r(ci.textEn),
             })),
           };
         }),

@@ -30,6 +30,7 @@ export default function StrategyPage() {
     addChecklistItem,
     removeChecklistItem,
     swapAlliances,
+    resetStrategyContent,
     setCurrentStep,
   } = useStrategyStore();
 
@@ -43,17 +44,30 @@ export default function StrategyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Step 4: 전략 편집</h2>
-        <button
-          onClick={() => {
-            swapAlliances();
-            toast.success(`연맹 스왑 완료: ${allianceSettings.allianceName} ↔ ${allianceSettings.partnerAlliance}`);
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
-        >
-          🔄 {allianceSettings.allianceName} ↔ {allianceSettings.partnerAlliance}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              swapAlliances();
+              toast.success(`연맹 스왑 완료: ${allianceSettings.allianceName} ↔ ${allianceSettings.partnerAlliance}`);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
+          >
+            🔄 {allianceSettings.allianceName} ↔ {allianceSettings.partnerAlliance}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('전략/콜사인/체크리스트를 기본값으로 초기화합니다. 현재 연맹 이름이 반영됩니다.')) {
+                resetStrategyContent();
+                toast.success('전략 데이터가 초기화되었습니다');
+              }
+            }}
+            className="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
+          >
+            ↻ 초기화
+          </button>
+        </div>
       </div>
 
       {/* Special Instructions */}

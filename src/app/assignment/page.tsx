@@ -19,6 +19,8 @@ export default function AssignmentPage() {
     assignedMembers,
     rallyLeaders,
     squads,
+    turretRallyCount,
+    setTurretRallyCount,
     setCurrentStep,
     runAutoAssign,
     setRallyLeaders,
@@ -93,15 +95,36 @@ export default function AssignmentPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Step 2: 역할 배정</h2>
-        <button
-          onClick={() => {
-            runAutoAssign();
-            toast.success('자동 배정 완료!');
-          }}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-        >
-          자동 배정
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">포탑 집결</label>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setTurretRallyCount(turretRallyCount - 1)}
+                disabled={turretRallyCount <= 0}
+                className="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-30 text-sm font-bold"
+              >
+                -
+              </button>
+              <span className="w-6 text-center text-sm font-medium text-gray-900 dark:text-white">{turretRallyCount}</span>
+              <button
+                onClick={() => setTurretRallyCount(turretRallyCount + 1)}
+                className="w-7 h-7 flex items-center justify-center rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-bold"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              runAutoAssign();
+              toast.success('자동 배정 완료!');
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+          >
+            자동 배정
+          </button>
+        </div>
       </div>
 
       {/* FC5 안내 */}
@@ -117,7 +140,14 @@ export default function AssignmentPage() {
         </div>
         <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">랠리조</p>
-          <p className="text-xl font-bold text-green-600 dark:text-green-400">{squads.length}개</p>
+          <p className="text-xl font-bold text-green-600 dark:text-green-400">
+            {squads.filter((s) => s.role !== 'turret').length}개
+            {squads.filter((s) => s.role === 'turret').length > 0 && (
+              <span className="text-sm text-purple-500 dark:text-purple-400 ml-1">
+                +{squads.filter((s) => s.role === 'turret').length}포탑
+              </span>
+            )}
+          </p>
         </div>
         <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">랠리 참여</p>
@@ -128,7 +158,7 @@ export default function AssignmentPage() {
         <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">포탑/대기</p>
           <p className="text-xl font-bold text-gray-500 dark:text-gray-400">
-            {assignedMembers.filter((m) => m.group === 'turret').length}명
+            {assignedMembers.filter((m) => m.group === 'turret' && !m.squadId).length}명
           </p>
         </div>
       </div>
@@ -203,16 +233,16 @@ export default function AssignmentPage() {
       </section>
 
       {/* Rally Groups with Drag & Drop */}
-      {squads.length > 0 && (
+      {squads.filter((s) => s.role !== 'turret').length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-              랠리조 편성 ({squads.length}개, 조당 {squads[0]?.members.length}~{squads[squads.length - 1]?.members.length}명)
+              랠리조 편성 ({squads.filter((s) => s.role !== 'turret').length}개)
             </h3>
             <p className="text-xs text-gray-400 dark:text-gray-500">닉네임을 드래그하여 다른 조로 이동</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            {squads.map((squad) => (
+            {squads.filter((s) => s.role !== 'turret').map((squad) => (
               <div
                 key={squad.id}
                 onDragOver={(e) => handleDragOver(e, squad.id)}
@@ -295,6 +325,9 @@ export default function AssignmentPage() {
                       <span className="text-gray-900 dark:text-gray-100">
                         <span className="text-gray-400 dark:text-gray-500 text-xs mr-1">{idx + 1}.</span>
                         {getDeepDiveIcon(m.deepDiveRank)} {m.nickname}
+                        {idx === 0 && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white font-semibold">집결장</span>
+                        )}
                       </span>
                       <div className="flex items-center gap-2">
                         {m.deepDiveRank && (
@@ -339,47 +372,106 @@ export default function AssignmentPage() {
         </section>
       )}
 
-      {/* Turret Members */}
-      {assignedMembers.filter((m) => m.group === 'turret').length > 0 && (
+      {/* Turret Rally Groups */}
+      {squads.filter((s) => s.role === 'turret').length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+              포탑 집결 ({squads.filter((s) => s.role === 'turret').length}개)
+            </h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              집결장: 서브/대체 집결장
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+            {squads.filter((s) => s.role === 'turret').map((squad, idx) => {
+              // Map turret rally leaders: sub → substitute1 → substitute2
+              const turretLeader = idx === 0
+                ? rallyLeaders?.sub
+                : rallyLeaders?.substitutes?.[idx - 1];
+              return (
+                <div
+                  key={squad.id}
+                  className="p-3 sm:p-4 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/30"
+                >
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">
+                        {'\uD83D\uDFE3'} {squad.name}
+                      </h4>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {squad.members.length}명
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-purple-600 dark:text-purple-400">
+                        집결장: {turretLeader?.nickname ?? '미지정'}
+                      </span>
+                      {/* Joiner hero selector */}
+                      <select
+                        value={squad.joinerHero}
+                        onChange={(e) => {
+                          updateSquadJoinerHero(squad.id, e.target.value);
+                          toast.success(`조이너 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
+                        }}
+                        className="text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-gray-100"
+                      >
+                        <optgroup label="수성 영웅">
+                          {DEFENSE_JOINERS.map((h) => (
+                            <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="공성 영웅">
+                          {OFFENSE_JOINERS.map((h) => (
+                            <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+                  {/* Members */}
+                  <div className="space-y-1">
+                    {squad.members.map((m, mIdx) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between text-xs sm:text-sm py-1 px-2 rounded bg-gray-100/50 dark:bg-gray-800/50"
+                      >
+                        <span className="text-gray-900 dark:text-gray-100">
+                          <span className="text-gray-400 dark:text-gray-500 text-xs mr-1">{mIdx + 1}.</span>
+                          {getDeepDiveIcon(m.deepDiveRank)} {m.nickname}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-purple-500 dark:text-purple-400">FC{m.fcLevel}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-xs">{m.combatPower}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Remaining Turret Members (no turret rally assigned) */}
+      {assignedMembers.filter((m) => m.group === 'turret' && !m.squadId).length > 0 && (
         <section className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
           <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">
-            포탑 / 대기 멤버 ({assignedMembers.filter((m) => m.group === 'turret').length}명)
+            포탑 대기 ({assignedMembers.filter((m) => m.group === 'turret' && !m.squadId).length}명)
           </h3>
-          {(() => {
-            const turretMembers = assignedMembers.filter((m) => m.group === 'turret');
-            const fc5Turret = turretMembers.filter((m) => m.isFC5);
-            const nonFc5Turret = turretMembers.filter((m) => !m.isFC5);
-            return (
-              <div className="space-y-3">
-                {fc5Turret.length > 0 && (
-                  <div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">FC5+ 대기 ({fc5Turret.length}명)</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
-                      {fc5Turret.map((m) => (
-                        <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded text-gray-700 dark:text-gray-300">
-                          {m.nickname} <span className="text-gray-400 dark:text-gray-500 text-xs">{m.combatPower}</span>
-                          <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">FC{m.fcLevel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {nonFc5Turret.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">FC5 미만 ({nonFc5Turret.length}명) - 캐슬 배정 불가</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
-                      {nonFc5Turret.map((m) => (
-                        <div key={m.id} className="text-xs sm:text-sm py-1.5 px-2 sm:px-3 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 dark:text-gray-500">
-                          {m.nickname} <span className="text-gray-400 dark:text-gray-600 text-xs">{m.combatPower}</span>
-                          <span className="text-xs text-gray-400 dark:text-gray-600 ml-1">FC{m.fcLevel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1 sm:gap-2">
+            {assignedMembers.filter((m) => m.group === 'turret' && !m.squadId).map((m) => (
+              <div key={m.id} className={`text-xs sm:text-sm py-1.5 px-2 sm:px-3 rounded ${
+                m.isFC5
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+              }`}>
+                {m.nickname} <span className="text-gray-400 dark:text-gray-500 text-xs">{m.combatPower}</span>
+                <span className={`text-xs ml-1 ${m.isFC5 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-600'}`}>FC{m.fcLevel}</span>
               </div>
-            );
-          })()}
+            ))}
+          </div>
         </section>
       )}
 

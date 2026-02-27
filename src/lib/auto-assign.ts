@@ -9,19 +9,23 @@ const SUBS_PER_RALLY = 2;
 /**
  * Auto-assign FC5 members into rally groups (9~12 members each)
  * + 2 substitutes per rally group
+ * + turret rallies (user-configured count)
  *
  * Flow:
  * 1. FC5 members sorted by Deep Dive Rank
  * 2. Top 2 → Rally Leaders (main + sub)
  * 3. Remaining FC5 → divided into rally groups of 9~12
- *    - First half = defense rallies (Patrick/Bahiti rotation)
+ *    - First half = defense rallies (Patrick rotation)
  *    - Second half = counter rallies (Jessie)
  * 4. Next members after rally groups → 2 substitutes per rally
- * 5. Rest → turret duty
+ * 5. Remaining FC5 + all non-FC5 → turret pool
+ * 6. Turret pool → divided into turretRallyCount turret rally groups
+ * 7. Rest → pure turret/standby
  */
 export function autoAssignMembers(
   members: AllianceMember[],
   allianceName: string = 'HAN',
+  turretRallyCount: number = 0,
 ): {
   rallyLeaders: RallyLeaderAssignment;
   squads: Squad[];
@@ -68,7 +72,7 @@ export function autoAssignMembers(
 
   // Take substitutes from remaining
   const subPool = afterRally.slice(0, Math.min(totalSubSlots, afterRally.length));
-  const turretPool = afterRally.slice(subPool.length);
+  const turretPoolFC5 = afterRally.slice(subPool.length);
 
   // Distribute rally pool into groups using round-robin for balanced power
   const groupBuckets: AllianceMember[][] = Array.from({ length: numRallyGroups }, () => []);
@@ -137,16 +141,48 @@ export function autoAssignMembers(
     });
   }
 
-  // Turret pool
-  turretPool.forEach((member) => {
-    assignedMembers.push({ ...member, group: 'turret' });
-  });
-
-  // Non-FC5 members → turret
+  // Combine turret pool: remaining FC5 + non-FC5 (sorted by combat power)
   const nonFC5 = members.filter((m) => !m.isFC5);
-  nonFC5.forEach((member) => {
-    assignedMembers.push({ ...member, group: 'turret' });
-  });
+  const allTurretPool = [...turretPoolFC5, ...nonFC5].sort(
+    (a, b) => b.combatPowerNumeric - a.combatPowerNumeric,
+  );
+
+  // Create turret rally groups if turretRallyCount > 0
+  if (turretRallyCount > 0 && allTurretPool.length > 0) {
+    const turretBuckets: AllianceMember[][] = Array.from(
+      { length: turretRallyCount },
+      () => [],
+    );
+    allTurretPool.forEach((member, index) => {
+      turretBuckets[index % turretRallyCount].push(member);
+    });
+
+    for (let i = 0; i < turretRallyCount; i++) {
+      const squadId = generateId();
+      const turretMembers: AssignedMember[] = turretBuckets[i].map((m) => ({
+        ...m,
+        group: 'turret' as const,
+        squadId,
+      }));
+
+      assignedMembers.push(...turretMembers);
+
+      squads.push({
+        id: squadId,
+        name: `포탑 ${i + 1}집결`,
+        alliance: allianceName,
+        role: 'turret',
+        members: turretMembers,
+        substitutes: [],
+        joinerHero: 'patrick',
+      });
+    }
+  } else {
+    // No turret rallies: all go to turret/standby
+    allTurretPool.forEach((member) => {
+      assignedMembers.push({ ...member, group: 'turret' });
+    });
+  }
 
   return { rallyLeaders, squads, assignedMembers };
 }

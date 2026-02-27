@@ -63,7 +63,7 @@ export interface AssignedMember extends AllianceMember {
 // ============================================================
 
 export type SquadAlliance = string;
-export type SquadRole = 'defense' | 'counter';
+export type SquadRole = 'defense' | 'counter' | 'turret';
 
 export interface Squad {
   id: string;

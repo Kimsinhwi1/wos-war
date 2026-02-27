@@ -52,6 +52,8 @@ interface StrategyStore {
   assignedMembers: AssignedMember[];
   rallyLeaders: RallyLeaderAssignment | null;
   squads: Squad[];
+  turretRallyCount: number;
+  setTurretRallyCount: (count: number) => void;
   setRallyLeaders: (leaders: RallyLeaderAssignment) => void;
   assignMemberToGroup: (memberId: string, group: MemberGroup) => void;
   setMemberHero: (memberId: string, type: 'offense' | 'defense', heroId: string) => void;
@@ -200,6 +202,8 @@ export const useStrategyStore = create<StrategyStore>()(
       assignedMembers: [],
       rallyLeaders: null,
       squads: [],
+      turretRallyCount: 0,
+      setTurretRallyCount: (count) => set({ turretRallyCount: Math.max(0, count) }),
       setRallyLeaders: (leaders) => set({ rallyLeaders: leaders }),
       assignMemberToGroup: (memberId, group) =>
         set((state) => ({
@@ -219,8 +223,8 @@ export const useStrategyStore = create<StrategyStore>()(
           ),
         })),
       runAutoAssign: () => {
-        const { allMembers, allianceSettings } = get();
-        const result = autoAssignMembers(allMembers, allianceSettings.allianceName);
+        const { allMembers, allianceSettings, turretRallyCount } = get();
+        const result = autoAssignMembers(allMembers, allianceSettings.allianceName, turretRallyCount);
         set({
           rallyLeaders: result.rallyLeaders,
           squads: result.squads,
@@ -470,9 +474,9 @@ export const useStrategyStore = create<StrategyStore>()(
     }),
     {
       name: 'wos-strategy-store',
-      version: 4,
+      version: 5,
       migrate: () => {
-        // v4: Alliance settings + squad role/hero config + Sergey removed
+        // v5: Turret rally support
         return {
           allMembers: [],
           importedAt: null,
@@ -480,6 +484,7 @@ export const useStrategyStore = create<StrategyStore>()(
           assignedMembers: [],
           rallyLeaders: null,
           squads: [],
+          turretRallyCount: 0,
           rallyConfigs: DEFAULT_RALLY_TYPES,
           strategies: DEFAULT_STRATEGIES.map((s) => ({ ...s })),
           activeStrategies: ['A', 'B', 'C'] as StrategyTemplateId[],

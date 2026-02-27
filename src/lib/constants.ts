@@ -371,7 +371,7 @@ export const DEFAULT_RALLY_TYPES: RallyType[] = [
     color: 'blue',
     troopRatio: { infantry: 5, lancer: 2, marksman: 3 },
     leaderComposition: { hero1Id: 'ahmose', hero2Id: 'philly', hero3Id: 'lyn' },
-    joinerHeroes: ['sergey', 'patrick', 'bahiti'],
+    joinerHeroes: ['patrick', 'sergey', 'bahiti'],
   },
   {
     id: 'defense_anti_archer',
@@ -380,7 +380,7 @@ export const DEFAULT_RALLY_TYPES: RallyType[] = [
     color: 'green',
     troopRatio: { infantry: 6, lancer: 4, marksman: 0 },
     leaderComposition: { hero1Id: 'ahmose', hero2Id: 'reina', hero3Id: 'zinman' },
-    joinerHeroes: ['sergey', 'patrick', 'bahiti'],
+    joinerHeroes: ['patrick', 'sergey', 'bahiti'],
     counterTo: 'offense_anti_spear',
   },
 ];
@@ -657,10 +657,11 @@ export const RALLY_COLORS = {
   yellow: { bg: 'bg-yellow-50 dark:bg-yellow-950/30', border: 'border-yellow-300 dark:border-yellow-700', text: 'text-yellow-600 dark:text-yellow-400', badge: 'bg-yellow-500', emoji: '\uD83D\uDFE1' },
   blue: { bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-500', emoji: '\uD83D\uDD35' },
   green: { bg: 'bg-green-50 dark:bg-green-950/30', border: 'border-green-300 dark:border-green-700', text: 'text-green-600 dark:text-green-400', badge: 'bg-green-500', emoji: '\uD83D\uDFE2' },
+  purple: { bg: 'bg-purple-50 dark:bg-purple-950/30', border: 'border-purple-300 dark:border-purple-700', text: 'text-purple-600 dark:text-purple-400', badge: 'bg-purple-500', emoji: '\uD83D\uDFE3' },
 } as const;
 
-// Defense joiner hero rotation (Patrick > Bahiti, Sergey excluded when Patrick available)
-export const DEFENSE_JOINER_ROTATION = ['patrick', 'bahiti'] as const;
+// Defense joiner hero rotation (Patrick only)
+export const DEFENSE_JOINER_ROTATION = ['patrick'] as const;
 
 // Default alliance settings
 export const DEFAULT_ALLIANCE_SETTINGS = {

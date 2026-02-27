@@ -62,7 +62,7 @@ export interface AssignedMember extends AllianceMember {
 // SQUAD (분대)
 // ============================================================
 
-export type SquadAlliance = 'KOR' | 'HAN';
+export type SquadAlliance = string;
 export type SquadRole = 'defense' | 'counter';
 
 export interface Squad {
@@ -214,12 +214,25 @@ export interface JoinerEffectEntry {
 }
 
 // ============================================================
+// ALLIANCE SETTINGS
+// ============================================================
+
+export interface AllianceSettings {
+  allianceName: string;       // e.g. "HAN"
+  serverNumber: string;       // e.g. "#3074"
+  leaderNickname: string;     // e.g. "집냥이"
+  partnerAlliance: string;    // e.g. "KOR"
+}
+
+// ============================================================
 // APP STATE
 // ============================================================
 
 export interface AppState {
   allMembers: AllianceMember[];
   importedAt: string | null;
+
+  allianceSettings: AllianceSettings;
 
   assignedMembers: AssignedMember[];
   rallyLeaders: RallyLeaderAssignment | null;

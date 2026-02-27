@@ -167,7 +167,6 @@ export default function MembersPage() {
     }
 
     // Merge duplicates by aggressively normalized nickname
-    // normalizeForMatch strips ALL special chars/spaces for robust matching
     const memberMap = new Map<string, AllianceMember>();
     for (const m of parsedMembers) {
       const matchKey = normalizeForMatch(m.nickname);
@@ -219,7 +218,7 @@ export default function MembersPage() {
     }
   }, [screenshotFiles, importMembers, mergeMembers, mergeMode, clearScreenshots]);
 
-  // Excel download (Blob 방식 — 브라우저 호환)
+  // Excel download (Blob)
   const downloadExcel = useCallback(async () => {
     try {
       const XLSX = await import('xlsx');
@@ -235,7 +234,6 @@ export default function MembersPage() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '\uBA64\uBC84\uBAA9\uB85D');
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      // writeFile 대신 Blob으로 직접 다운로드 (Node.js 의존성 제거)
       const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -264,11 +262,8 @@ export default function MembersPage() {
     return b.fcLevel - a.fcLevel;
   });
 
-  // 매칭 제안: 전투력 없는 멤버 ↔ 지심 없는 멤버 간 유사도 계산
   const matchSuggestions = useMemo(() => {
-    // 전투력 0인 멤버 (연맹원 목록에서만 온 멤버)
     const noCP = allMembers.filter((m) => m.combatPowerNumeric === 0 && m.deepDiveRank !== null);
-    // 지심순위 없는 멤버 (FC/전투력 스크린샷에서만 온 멤버)
     const noRank = allMembers.filter((m) => m.deepDiveRank === null && m.combatPowerNumeric > 0);
 
     if (noCP.length === 0 || noRank.length === 0) return [];
@@ -309,19 +304,19 @@ export default function MembersPage() {
           <div className="flex gap-2">
             <button
               onClick={downloadExcel}
-              className="px-3 py-1.5 text-sm bg-green-600/20 text-green-400 rounded hover:bg-green-600/30"
+              className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-600/30"
             >
               엑셀 다운로드
             </button>
             <button
               onClick={() => setMergeMode(true)}
-              className="px-3 py-1.5 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30"
+              className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-600/30"
             >
               추가 가져오기
             </button>
             <button
               onClick={clearMembers}
-              className="px-3 py-1.5 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30"
+              className="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-600/30"
             >
               초기화
             </button>
@@ -331,39 +326,39 @@ export default function MembersPage() {
 
       {/* 사용 가이드 */}
       {allMembers.length === 0 ? (
-        <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg space-y-3">
-          <p className="text-sm font-medium text-gray-200">사용 방법</p>
-          <div className="text-xs text-gray-400 space-y-3">
+        <div className="p-4 bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">사용 방법</p>
+          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-3">
             <div>
-              <p className="text-gray-300 font-medium mb-1">방법 A: 엑셀 업로드</p>
-              <div className="space-y-1 pl-2 border-l border-gray-700">
+              <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">방법 A: 엑셀 업로드</p>
+              <div className="space-y-1 pl-2 border-l border-gray-300 dark:border-gray-700">
                 <p>이미 정리된 엑셀 파일(.xlsx)이 있으면 바로 업로드하면 됩니다</p>
                 <p>필수 컬럼: 이름, 전투력, 불의수정(FC레벨), 지심탐험, 스테이지</p>
               </div>
             </div>
             <div>
-              <p className="text-gray-300 font-medium mb-1">방법 B: 스크린샷 OCR</p>
-              <div className="space-y-1.5 pl-2 border-l border-gray-700">
+              <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">방법 B: 스크린샷 OCR</p>
+              <div className="space-y-1.5 pl-2 border-l border-gray-300 dark:border-gray-700">
                 <div className="flex gap-2">
-                  <span className="text-blue-400 font-bold shrink-0">1.</span>
-                  <p><span className="text-gray-300">연맹원 목록 스크린샷</span>을 먼저 업로드 (순위 + 닉네임 + 지심탐험 점수)</p>
+                  <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">1.</span>
+                  <p><span className="text-gray-700 dark:text-gray-300">연맹원 목록 스크린샷</span>을 먼저 업로드 (순위 + 닉네임 + 지심탐험 점수)</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-blue-400 font-bold shrink-0">2.</span>
-                  <p><span className="text-gray-300">[추가 가져오기]</span> 버튼 &rarr; <span className="text-gray-300">FC/전투력 순위 스크린샷</span> 추가 업로드</p>
+                  <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">2.</span>
+                  <p><span className="text-gray-700 dark:text-gray-300">[추가 가져오기]</span> 버튼 &rarr; <span className="text-gray-700 dark:text-gray-300">FC/전투력 순위 스크린샷</span> 추가 업로드</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-blue-400 font-bold shrink-0">3.</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">3.</span>
                   <p>닉네임이 자동 매칭되어 전투력/FC 데이터가 병합됩니다</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-yellow-400 font-bold shrink-0">4.</span>
-                  <p>OCR 인식 차이로 매칭 안 된 멤버는 <span className="text-yellow-300">노란색 매칭 제안</span>에서 <span className="text-blue-300">[합치기]</span>로 수동 병합</p>
+                  <span className="text-yellow-600 dark:text-yellow-400 font-bold shrink-0">4.</span>
+                  <p>OCR 인식 차이로 매칭 안 된 멤버는 <span className="text-yellow-600 dark:text-yellow-300">노란색 매칭 제안</span>에서 <span className="text-blue-600 dark:text-blue-300">[합치기]</span>로 수동 병합</p>
                 </div>
               </div>
             </div>
             <div className="flex gap-2">
-              <span className="text-green-400 font-bold shrink-0">Tip</span>
+              <span className="text-green-600 dark:text-green-400 font-bold shrink-0">Tip</span>
               <p>닉네임/전투력/FC레벨을 클릭하면 직접 수정 가능합니다</p>
             </div>
           </div>
@@ -371,31 +366,31 @@ export default function MembersPage() {
       ) : !mergeMode && (
         <button
           onClick={() => setShowGuide(!showGuide)}
-          className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+          className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
         >
           {showGuide ? '사용 가이드 접기 ▲' : '사용 가이드 보기 ▼'}
         </button>
       )}
       {showGuide && allMembers.length > 0 && !mergeMode && (
-        <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400 space-y-1.5">
-          <p><span className="text-blue-300">[추가 가져오기]</span> — 스크린샷 또는 엑셀을 추가 업로드하여 기존 데이터에 병합</p>
-          <p><span className="text-yellow-300">매칭 제안</span> — OCR 인식 차이로 자동 매칭 안 된 멤버를 유사도 기반으로 제안. [합치기]로 수동 병합</p>
-          <p><span className="text-gray-300">셀 클릭</span> — 닉네임, 전투력, FC레벨을 클릭하여 직접 수정 가능</p>
-          <p><span className="text-green-300">[엑셀 다운로드]</span> — 현재 멤버 목록을 .xlsx 파일로 저장</p>
-          <p><span className="text-red-300">[초기화]</span> — 모든 멤버 데이터를 삭제하고 처음부터 다시 시작</p>
+        <div className="p-3 bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
+          <p><span className="text-blue-600 dark:text-blue-300">[추가 가져오기]</span> — 스크린샷 또는 엑셀을 추가 업로드하여 기존 데이터에 병합</p>
+          <p><span className="text-yellow-600 dark:text-yellow-300">매칭 제안</span> — OCR 인식 차이로 자동 매칭 안 된 멤버를 유사도 기반으로 제안. [합치기]로 수동 병합</p>
+          <p><span className="text-gray-700 dark:text-gray-300">셀 클릭</span> — 닉네임, 전투력, FC레벨을 클릭하여 직접 수정 가능</p>
+          <p><span className="text-green-600 dark:text-green-300">[엑셀 다운로드]</span> — 현재 멤버 목록을 .xlsx 파일로 저장</p>
+          <p><span className="text-red-600 dark:text-red-300">[초기화]</span> — 모든 멤버 데이터를 삭제하고 처음부터 다시 시작</p>
         </div>
       )}
 
       {/* Merge Mode Banner */}
       {mergeMode && (
-        <div className="p-3 bg-blue-600/10 border border-blue-600/30 rounded-lg flex items-center justify-between">
-          <p className="text-sm text-blue-300">
+        <div className="p-3 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-600/30 rounded-lg flex items-center justify-between">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             추가 가져오기 모드: 기존 {allMembers.length}명 데이터에 새 데이터를 병합합니다.
             (닉네임 기준 중복 병합, 더 높은 값 유지)
           </p>
           <button
             onClick={() => { setMergeMode(false); clearScreenshots(); }}
-            className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+            className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             취소
           </button>
@@ -406,13 +401,13 @@ export default function MembersPage() {
       {showUploadArea && (
         <div className="space-y-4">
           {/* Tab Selector */}
-          <div className="flex border-b border-gray-700">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setUploadTab('excel')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 uploadTab === 'excel'
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               엑셀 업로드
@@ -421,8 +416,8 @@ export default function MembersPage() {
               onClick={() => setUploadTab('screenshot')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 uploadTab === 'screenshot'
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               스크린샷 OCR
@@ -436,17 +431,17 @@ export default function MembersPage() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={onDrop}
               className={`border-2 border-dashed rounded-xl p-6 sm:p-12 text-center transition-colors ${
-                isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-500'
+                isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
             >
               {isLoading ? (
-                <p className="text-gray-400">파싱 중...</p>
+                <p className="text-gray-500 dark:text-gray-400">파싱 중...</p>
               ) : (
                 <>
-                  <p className="text-lg text-gray-300 mb-2">
+                  <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
                     엑셀 파일을 드래그하거나 클릭하여 업로드
                   </p>
-                  <p className="text-sm text-gray-500">연맹_멤버_통합.xlsx</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">연맹_멤버_통합.xlsx</p>
                   <input
                     type="file"
                     accept=".xlsx,.xls"
@@ -476,16 +471,16 @@ export default function MembersPage() {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={onDrop}
                 className={`border-2 border-dashed rounded-xl p-6 sm:p-10 text-center transition-colors ${
-                  isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-500'
+                  isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
                 }`}
               >
-                <p className="text-lg text-gray-300 mb-2">
+                <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
                   게임 스크린샷을 드래그하거나 클릭하여 업로드
                 </p>
-                <p className="text-sm text-gray-500 mb-1">
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-1">
                   멤버목록, 지심탐험 순위 스크린샷 (최대 20장)
                 </p>
-                <p className="text-xs text-gray-600 mb-4">
+                <p className="text-xs text-gray-400 dark:text-gray-600 mb-4">
                   GPT-4o Vision으로 닉네임, 전투력, FC레벨, 지심순위를 자동 추출합니다
                 </p>
                 <input
@@ -513,12 +508,12 @@ export default function MembersPage() {
               {screenshotFiles.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {screenshotFiles.length}장 선택됨
                     </p>
                     <button
                       onClick={clearScreenshots}
-                      className="text-xs text-red-400 hover:text-red-300"
+                      className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     >
                       전체 삭제
                     </button>
@@ -530,7 +525,7 @@ export default function MembersPage() {
                         <img
                           src={url}
                           alt={`Screenshot ${i + 1}`}
-                          className="w-full h-16 sm:h-20 object-cover rounded border border-gray-700"
+                          className="w-full h-16 sm:h-20 object-cover rounded border border-gray-200 dark:border-gray-700"
                         />
                         <button
                           onClick={() => removeScreenshot(i)}
@@ -551,7 +546,7 @@ export default function MembersPage() {
                     disabled={isParsing}
                     className={`w-full py-3 rounded-lg font-medium text-white transition-colors ${
                       isParsing
-                        ? 'bg-gray-700 cursor-not-allowed'
+                        ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed'
                         : 'bg-green-600 hover:bg-green-700'
                     }`}
                   >
@@ -563,7 +558,7 @@ export default function MembersPage() {
                   </button>
 
                   {isParsing && (
-                    <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full transition-all duration-300"
                         style={{
@@ -596,35 +591,35 @@ export default function MembersPage() {
 
           {/* 매칭 제안 섹션 */}
           {matchSuggestions.length > 0 && (
-            <div className="p-4 bg-yellow-600/10 border border-yellow-600/30 rounded-lg space-y-3">
-              <p className="text-sm font-medium text-yellow-300">
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-600/10 border border-yellow-200 dark:border-yellow-600/30 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
                 닉네임 유사 매칭 제안 ({matchSuggestions.length}건)
               </p>
-              <p className="text-xs text-yellow-400/70">
+              <p className="text-xs text-yellow-600/70 dark:text-yellow-400/70">
                 OCR 인식 차이로 매칭되지 않은 멤버를 합칠 수 있습니다
               </p>
               <div className="space-y-2">
                 {matchSuggestions.map(({ member, candidate, similarity }) => (
                   <div
                     key={member.id + candidate.id}
-                    className="flex items-center gap-2 text-sm bg-gray-900/50 rounded px-3 py-2"
+                    className="flex items-center gap-2 text-sm bg-white/50 dark:bg-gray-900/50 rounded px-3 py-2"
                   >
-                    <span className="text-gray-300 min-w-0 truncate flex-1" title={member.nickname}>
+                    <span className="text-gray-700 dark:text-gray-300 min-w-0 truncate flex-1" title={member.nickname}>
                       {member.nickname}
-                      <span className="text-xs text-gray-500 ml-1">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
                         (지심{member.deepDiveRank}, CP 0)
                       </span>
                     </span>
                     <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                      similarity >= 0.7 ? 'bg-green-600/20 text-green-400' :
-                      similarity >= 0.5 ? 'bg-yellow-600/20 text-yellow-400' :
-                      'bg-red-600/20 text-red-400'
+                      similarity >= 0.7 ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400' :
+                      similarity >= 0.5 ? 'bg-yellow-100 dark:bg-yellow-600/20 text-yellow-700 dark:text-yellow-400' :
+                      'bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-400'
                     }`}>
                       {Math.round(similarity * 100)}%
                     </span>
-                    <span className="text-gray-300 min-w-0 truncate flex-1 text-right" title={candidate.nickname}>
+                    <span className="text-gray-700 dark:text-gray-300 min-w-0 truncate flex-1 text-right" title={candidate.nickname}>
                       {candidate.nickname}
-                      <span className="text-xs text-gray-500 ml-1">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
                         ({candidate.combatPower}, FC{candidate.fcLevel})
                       </span>
                     </span>
@@ -643,7 +638,7 @@ export default function MembersPage() {
             </div>
           )}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             닉네임, 전투력, FC레벨을 클릭하면 수정할 수 있습니다
           </p>
 
@@ -654,7 +649,7 @@ export default function MembersPage() {
                 key={field}
                 onClick={() => setSortField(field)}
                 className={`px-3 py-1 text-sm rounded ${
-                  sortField === field ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  sortField === field ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
                 {field === 'deepDiveRank' ? '지심탐험순' : field === 'combatPower' ? '전투력순' : 'FC레벨순'}
@@ -663,16 +658,16 @@ export default function MembersPage() {
           </div>
 
           {/* Member Table */}
-          <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full text-sm">
-              <thead className="bg-gray-900">
+              <thead className="bg-gray-100 dark:bg-gray-900">
                 <tr>
-                  <th className="px-2 sm:px-3 py-2 text-left text-gray-400 hidden sm:table-cell">#</th>
-                  <th className="px-2 sm:px-3 py-2 text-left text-gray-400">닉네임</th>
-                  <th className="px-2 sm:px-3 py-2 text-right text-gray-400">전투력</th>
-                  <th className="px-2 sm:px-3 py-2 text-center text-gray-400">FC</th>
-                  <th className="px-2 sm:px-3 py-2 text-center text-gray-400">지심</th>
-                  <th className="px-2 sm:px-3 py-2 text-center text-gray-400 hidden sm:table-cell">스테이지</th>
+                  <th className="px-2 sm:px-3 py-2 text-left text-gray-500 dark:text-gray-400 hidden sm:table-cell">#</th>
+                  <th className="px-2 sm:px-3 py-2 text-left text-gray-500 dark:text-gray-400">닉네임</th>
+                  <th className="px-2 sm:px-3 py-2 text-right text-gray-500 dark:text-gray-400">전투력</th>
+                  <th className="px-2 sm:px-3 py-2 text-center text-gray-500 dark:text-gray-400">FC</th>
+                  <th className="px-2 sm:px-3 py-2 text-center text-gray-500 dark:text-gray-400">지심</th>
+                  <th className="px-2 sm:px-3 py-2 text-center text-gray-500 dark:text-gray-400 hidden sm:table-cell">스테이지</th>
                 </tr>
               </thead>
               <tbody>
@@ -709,9 +704,9 @@ export default function MembersPage() {
 
 function SummaryCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div className={`p-4 rounded-lg border ${highlight ? 'border-blue-600 bg-blue-600/10' : 'border-gray-800 bg-gray-900'}`}>
-      <p className="text-xs text-gray-400 mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${highlight ? 'text-blue-400' : 'text-white'}`}>{value}</p>
+    <div className={`p-4 rounded-lg border ${highlight ? 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-600/10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'}`}>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+      <p className={`text-2xl font-bold ${highlight ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>{value}</p>
     </div>
   );
 }
@@ -775,8 +770,8 @@ function MemberRow({
   };
 
   return (
-    <tr className={`border-t border-gray-800 ${isTop40 ? 'bg-blue-600/5' : ''} ${!member.isFC5 ? 'opacity-50' : ''}`}>
-      <td className="px-2 sm:px-3 py-2 text-gray-500 hidden sm:table-cell">{index + 1}</td>
+    <tr className={`border-t border-gray-200 dark:border-gray-800 ${isTop40 ? 'bg-blue-50/50 dark:bg-blue-600/5' : ''} ${!member.isFC5 ? 'opacity-50' : ''}`}>
+      <td className="px-2 sm:px-3 py-2 text-gray-400 dark:text-gray-500 hidden sm:table-cell">{index + 1}</td>
 
       {/* Nickname - editable */}
       <td className="px-2 sm:px-3 py-2 font-medium text-xs sm:text-sm">
@@ -788,17 +783,17 @@ function MemberRow({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={saveEdit}
             onKeyDown={handleKeyDown}
-            className="w-full bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-white text-xs sm:text-sm outline-none"
+            className="w-full bg-white dark:bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-gray-900 dark:text-white text-xs sm:text-sm outline-none"
           />
         ) : (
           <span
             onClick={() => startEdit('nickname')}
-            className="cursor-pointer hover:text-blue-400 transition-colors"
+            className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             title="클릭하여 수정"
           >
             {icon && <span className="mr-1">{icon}</span>}
             {member.nickname}
-            {member.isFC5 && <span className="ml-1 text-xs text-blue-400">FC{member.fcLevel}</span>}
+            {member.isFC5 && <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">FC{member.fcLevel}</span>}
           </span>
         )}
       </td>
@@ -814,12 +809,12 @@ function MemberRow({
             onBlur={saveEdit}
             onKeyDown={handleKeyDown}
             placeholder="예: 375.7M"
-            className="w-24 bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-white text-xs sm:text-sm text-right outline-none"
+            className="w-24 bg-white dark:bg-gray-800 border border-blue-500 rounded px-1.5 py-0.5 text-gray-900 dark:text-white text-xs sm:text-sm text-right outline-none"
           />
         ) : (
           <span
             onClick={() => startEdit('combatPower')}
-            className="cursor-pointer text-gray-300 hover:text-blue-400 transition-colors"
+            className="cursor-pointer text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             title="클릭하여 수정"
           >
             {member.combatPower || '0'}
@@ -839,7 +834,7 @@ function MemberRow({
               setEditField(null);
             }}
             onBlur={() => setEditField(null)}
-            className="bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white text-xs outline-none"
+            className="bg-white dark:bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-gray-900 dark:text-white text-xs outline-none"
           >
             {Array.from({ length: 11 }, (_, i) => (
               <option key={i} value={i}>{i}</option>
@@ -849,7 +844,7 @@ function MemberRow({
           <span
             onClick={() => startEdit('fcLevel')}
             className={`inline-block px-1.5 sm:px-2 py-0.5 rounded text-xs cursor-pointer hover:ring-1 hover:ring-blue-500 transition-all ${
-              member.isFC5 ? 'bg-green-600/20 text-green-400' : 'bg-gray-700 text-gray-400'
+              member.isFC5 ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
             }`}
             title="클릭하여 수정"
           >
@@ -858,10 +853,10 @@ function MemberRow({
         )}
       </td>
 
-      <td className="px-2 sm:px-3 py-2 text-center text-gray-300 text-xs sm:text-sm">
+      <td className="px-2 sm:px-3 py-2 text-center text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
         {member.deepDiveRank ?? '-'}
       </td>
-      <td className="px-2 sm:px-3 py-2 text-center text-gray-400 hidden sm:table-cell">{member.stage ?? '-'}</td>
+      <td className="px-2 sm:px-3 py-2 text-center text-gray-500 dark:text-gray-400 hidden sm:table-cell">{member.stage ?? '-'}</td>
     </tr>
   );
 }

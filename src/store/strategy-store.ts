@@ -4,8 +4,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   AllianceMember,
+  AllianceSettings,
   AssignedMember,
   Squad,
+  SquadRole,
   RallyType,
   RallyLeaderAssignment,
   StrategyTemplate,
@@ -26,12 +28,17 @@ import {
   DEFAULT_HAN_INSTRUCTIONS,
   DEFAULT_COUNTER_MATRIX,
   DEFAULT_JOINER_EFFECTS,
+  DEFAULT_ALLIANCE_SETTINGS,
   HEROES,
 } from '@/lib/constants';
 import { autoAssignMembers } from '@/lib/auto-assign';
 import { generateId, parseCombatPower, normalizeNickname, normalizeForMatch } from '@/lib/utils';
 
 interface StrategyStore {
+  // Alliance Settings
+  allianceSettings: AllianceSettings;
+  updateAllianceSettings: (updates: Partial<AllianceSettings>) => void;
+
   // Step 1: Members
   allMembers: AllianceMember[];
   importedAt: string | null;
@@ -52,6 +59,8 @@ interface StrategyStore {
   moveToSquad: (memberId: string, squadId: string) => void;
   removeFromSquad: (memberId: string) => void;
   moveSquadMember: (memberId: string, toSquadId: string) => void;
+  updateSquadRole: (squadId: string, role: SquadRole) => void;
+  updateSquadJoinerHero: (squadId: string, heroId: string) => void;
 
   // Step 3: Rally Config
   rallyConfigs: RallyType[];
@@ -94,6 +103,13 @@ interface StrategyStore {
 export const useStrategyStore = create<StrategyStore>()(
   persist(
     (set, get) => ({
+      // Alliance Settings
+      allianceSettings: { ...DEFAULT_ALLIANCE_SETTINGS },
+      updateAllianceSettings: (updates) =>
+        set((state) => ({
+          allianceSettings: { ...state.allianceSettings, ...updates },
+        })),
+
       // Step 1
       allMembers: [],
       importedAt: null,
@@ -203,8 +219,8 @@ export const useStrategyStore = create<StrategyStore>()(
           ),
         })),
       runAutoAssign: () => {
-        const { allMembers } = get();
-        const result = autoAssignMembers(allMembers);
+        const { allMembers, allianceSettings } = get();
+        const result = autoAssignMembers(allMembers, allianceSettings.allianceName);
         set({
           rallyLeaders: result.rallyLeaders,
           squads: result.squads,
@@ -225,6 +241,22 @@ export const useStrategyStore = create<StrategyStore>()(
         set((state) => ({
           assignedMembers: state.assignedMembers.map((m) =>
             m.id === memberId ? { ...m, squadId: undefined, group: 'turret' } : m,
+          ),
+        })),
+      updateSquadRole: (squadId, role) =>
+        set((state) => ({
+          squads: state.squads.map((s) => {
+            if (s.id !== squadId) return s;
+            const newName = role === 'defense'
+              ? s.name.replace(/카운터|공성/, '수성')
+              : s.name.replace(/수성/, '카운터');
+            return { ...s, role, name: newName };
+          }),
+        })),
+      updateSquadJoinerHero: (squadId, heroId) =>
+        set((state) => ({
+          squads: state.squads.map((s) =>
+            s.id === squadId ? { ...s, joinerHero: heroId } : s,
           ),
         })),
       moveSquadMember: (memberId, toSquadId) =>
@@ -411,8 +443,9 @@ export const useStrategyStore = create<StrategyStore>()(
         });
         const legendaryHeroes = HEROES.filter((h) => usedHeroIds.has(h.id));
 
+        const { allianceName } = state.allianceSettings;
         return {
-          title: 'SVS 캐슬전투 최종 전략서 (HAN)',
+          title: `SVS 캐슬전투 최종 전략서 (${allianceName})`,
           lastUpdated: new Date().toISOString().split('T')[0],
           discordLink: 'https://discord.gg/CXXAGgEgm7',
           legendaryHeroes,
@@ -437,12 +470,13 @@ export const useStrategyStore = create<StrategyStore>()(
     }),
     {
       name: 'wos-strategy-store',
-      version: 3,
+      version: 4,
       migrate: () => {
-        // v3: Editable strategies + squad member movement
+        // v4: Alliance settings + squad role/hero config + Sergey removed
         return {
           allMembers: [],
           importedAt: null,
+          allianceSettings: { ...DEFAULT_ALLIANCE_SETTINGS },
           assignedMembers: [],
           rallyLeaders: null,
           squads: [],

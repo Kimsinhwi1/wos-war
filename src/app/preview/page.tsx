@@ -49,19 +49,21 @@ export default function PreviewPage() {
     }
   };
 
-  if (!doc) return <p className="text-gray-400 text-center py-20">문서 생성 중...</p>;
+  if (!doc) return <p className="text-gray-500 dark:text-gray-400 text-center py-20">문서 생성 중...</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Step 5: 미리보기 & 내보내기</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Step 5: 미리보기 & 내보내기</h2>
         <div className="flex gap-2">
           {(['ko', 'en', 'both'] as Lang[]).map((l) => (
             <button
               key={l}
               onClick={() => setLang(l)}
               className={`px-3 py-1 text-sm rounded ${
-                lang === l ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                lang === l
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {l === 'ko' ? '한국어' : l === 'en' ? 'English' : '이중언어'}
@@ -70,8 +72,8 @@ export default function PreviewPage() {
         </div>
       </div>
 
-      {/* Document Preview */}
-      <div className="p-3 sm:p-6 bg-white text-gray-900 rounded-lg space-y-4 text-xs sm:text-sm leading-relaxed overflow-x-auto">
+      {/* Document Preview - always light bg for document readability */}
+      <div className="p-3 sm:p-6 bg-white text-gray-900 rounded-lg space-y-4 text-xs sm:text-sm leading-relaxed overflow-x-auto shadow-sm border border-gray-200 dark:border-gray-700">
         {/* Title */}
         <h1 className="text-xl font-bold text-center">{doc.title}</h1>
         <p className="text-center text-gray-500 text-xs">
@@ -326,7 +328,7 @@ export default function PreviewPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => { setCurrentStep(4); router.push('/strategy'); }}
-          className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700"
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700"
         >
           &larr; 이전
         </button>
@@ -336,7 +338,7 @@ export default function PreviewPage() {
               href={notionPageUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:underline text-sm"
+              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
             >
               Notion 페이지 열기 &rarr;
             </a>
@@ -346,7 +348,7 @@ export default function PreviewPage() {
             disabled={notionExportStatus === 'exporting'}
             className={`px-6 py-2 rounded-lg font-medium ${
               notionExportStatus === 'exporting'
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : notionExportStatus === 'success'
                   ? 'bg-green-600 text-white'
                   : 'bg-purple-600 text-white hover:bg-purple-700'

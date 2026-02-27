@@ -14,13 +14,14 @@ const SUBS_PER_RALLY = 2;
  * 1. FC5 members sorted by Deep Dive Rank
  * 2. Top 2 → Rally Leaders (main + sub)
  * 3. Remaining FC5 → divided into rally groups of 9~12
- *    - First half = defense rallies (Patrick/Sergey/Bahiti rotation)
+ *    - First half = defense rallies (Patrick/Bahiti rotation)
  *    - Second half = counter rallies (Jessie)
  * 4. Next members after rally groups → 2 substitutes per rally
  * 5. Rest → turret duty
  */
 export function autoAssignMembers(
   members: AllianceMember[],
+  allianceName: string = 'HAN',
 ): {
   rallyLeaders: RallyLeaderAssignment;
   squads: Squad[];
@@ -56,7 +57,6 @@ export function autoAssignMembers(
 
   // Calculate optimal number of rally groups
   const numRallyGroups = calcRallyGroupCount(remaining.length);
-  const membersPerGroup = Math.floor(remaining.length / (numRallyGroups + (numRallyGroups * SUBS_PER_RALLY > 0 ? 0 : 0)));
 
   // Allocate members: rally members first, then subs, then turret
   const totalRallySlots = numRallyGroups * TARGET_RALLY_SIZE;
@@ -78,7 +78,6 @@ export function autoAssignMembers(
 
   // Split groups into defense and counter
   const defenseCount = Math.ceil(numRallyGroups / 2);
-  const counterCount = numRallyGroups - defenseCount;
 
   const squads: Squad[] = [];
   const assignedMembers: AssignedMember[] = [];
@@ -130,7 +129,7 @@ export function autoAssignMembers(
     squads.push({
       id: squadId,
       name: isDefense ? `수성 ${groupNum}랠리` : `카운터 ${groupNum}랠리`,
-      alliance: 'HAN',
+      alliance: allianceName,
       role: isDefense ? 'defense' : 'counter',
       members: squadMembers,
       substitutes: groupSubs,

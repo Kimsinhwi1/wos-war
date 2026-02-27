@@ -16,7 +16,7 @@ export default function Stepper() {
   const currentStep = useStrategyStore((s) => s.currentStep);
 
   return (
-    <nav className="flex items-center justify-center gap-1 px-4 py-3 bg-gray-900 border-b border-gray-700">
+    <nav className="flex items-center justify-center gap-1 px-4 py-3 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       {STEPS.map((step, i) => (
         <div key={step.number} className="flex items-center">
           <Link
@@ -26,8 +26,8 @@ export default function Stepper() {
               currentStep === step.number
                 ? 'bg-blue-600 text-white'
                 : currentStep > step.number
-                  ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700',
+                  ? 'bg-green-100 dark:bg-green-600/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-600/30'
+                  : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700',
             )}
           >
             <span
@@ -37,7 +37,7 @@ export default function Stepper() {
                   ? 'bg-white text-blue-600'
                   : currentStep > step.number
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-600 text-gray-300',
+                    : 'bg-gray-400 dark:bg-gray-600 text-white dark:text-gray-300',
               )}
             >
               {currentStep > step.number ? '\u2713' : step.number}
@@ -47,7 +47,7 @@ export default function Stepper() {
           {i < STEPS.length - 1 && (
             <div className={cn(
               'w-4 sm:w-8 h-0.5 mx-0.5 sm:mx-1',
-              currentStep > step.number ? 'bg-green-500' : 'bg-gray-700'
+              currentStep > step.number ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700'
             )} />
           )}
         </div>

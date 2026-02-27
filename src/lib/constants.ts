@@ -653,11 +653,19 @@ export function getDeepDiveIcon(rank: number | null): string {
 // ============================================================
 
 export const RALLY_COLORS = {
-  red: { bg: 'bg-red-950/30', border: 'border-red-700', text: 'text-red-400', badge: 'bg-red-500', emoji: '\uD83D\uDD34' },
-  yellow: { bg: 'bg-yellow-950/30', border: 'border-yellow-700', text: 'text-yellow-400', badge: 'bg-yellow-500', emoji: '\uD83D\uDFE1' },
-  blue: { bg: 'bg-blue-950/30', border: 'border-blue-700', text: 'text-blue-400', badge: 'bg-blue-500', emoji: '\uD83D\uDD35' },
-  green: { bg: 'bg-green-950/30', border: 'border-green-700', text: 'text-green-400', badge: 'bg-green-500', emoji: '\uD83D\uDFE2' },
+  red: { bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-300 dark:border-red-700', text: 'text-red-600 dark:text-red-400', badge: 'bg-red-500', emoji: '\uD83D\uDD34' },
+  yellow: { bg: 'bg-yellow-50 dark:bg-yellow-950/30', border: 'border-yellow-300 dark:border-yellow-700', text: 'text-yellow-600 dark:text-yellow-400', badge: 'bg-yellow-500', emoji: '\uD83D\uDFE1' },
+  blue: { bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-500', emoji: '\uD83D\uDD35' },
+  green: { bg: 'bg-green-50 dark:bg-green-950/30', border: 'border-green-300 dark:border-green-700', text: 'text-green-600 dark:text-green-400', badge: 'bg-green-500', emoji: '\uD83D\uDFE2' },
 } as const;
 
-// Defense joiner hero rotation
-export const DEFENSE_JOINER_ROTATION = ['patrick', 'sergey', 'bahiti'] as const;
+// Defense joiner hero rotation (Patrick > Bahiti, Sergey excluded when Patrick available)
+export const DEFENSE_JOINER_ROTATION = ['patrick', 'bahiti'] as const;
+
+// Default alliance settings
+export const DEFAULT_ALLIANCE_SETTINGS = {
+  allianceName: 'HAN',
+  serverNumber: '#3074',
+  leaderNickname: '집냥이',
+  partnerAlliance: 'KOR',
+} as const;

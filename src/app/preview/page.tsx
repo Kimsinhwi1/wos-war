@@ -187,9 +187,9 @@ export default function PreviewPage() {
         {doc.squads.map((squad) => (
           <div key={squad.id} className="mb-3">
             <h3 className="font-semibold">
-              {squad.role === 'defense' ? '\uD83D\uDEE1\uFE0F' : '\u2694\uFE0F'} {squad.name}
+              {squad.role === 'turret' ? '\uD83D\uDFE3' : '\u2694\uFE0F'} {squad.name}
               <span className="ml-2 text-gray-500 text-xs font-normal">
-                ({getHeroName(squad.joinerHero, lang === 'en' ? 'en' : 'ko')})
+                ({lang !== 'en' ? '수성' : 'Def'}: {getHeroName(squad.defenseJoinerHero, lang === 'en' ? 'en' : 'ko')} / {lang !== 'en' ? '공성' : 'Off'}: {getHeroName(squad.offenseJoinerHero, lang === 'en' ? 'en' : 'ko')})
               </span>
             </h3>
             <table className="w-full border-collapse border border-gray-300 text-xs mt-1">

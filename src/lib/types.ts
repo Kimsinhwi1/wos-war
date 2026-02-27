@@ -63,7 +63,7 @@ export interface AssignedMember extends AllianceMember {
 // ============================================================
 
 export type SquadAlliance = string;
-export type SquadRole = 'defense' | 'counter' | 'turret';
+export type SquadRole = 'rally' | 'turret';
 
 export interface Squad {
   id: string;
@@ -72,8 +72,9 @@ export interface Squad {
   role: SquadRole;
   members: AssignedMember[];
   substitutes: AssignedMember[];
-  joinerHero: string;
-  rallyLeaderId?: string;  // 이 스쿼드를 리딩하는 집결장 멤버 ID
+  defenseJoinerHero: string;   // 수성 시 조이너 영웅
+  offenseJoinerHero: string;   // 공성 시 조이너 영웅
+  rallyLeaderId?: string;      // 이 스쿼드를 리딩하는 집결장 멤버 ID
 }
 
 // ============================================================

@@ -7,7 +7,6 @@ import type {
   AllianceSettings,
   AssignedMember,
   Squad,
-  SquadRole,
   RallyType,
   RallyLeaderAssignment,
   StrategyTemplate,
@@ -61,8 +60,7 @@ interface StrategyStore {
   moveToSquad: (memberId: string, squadId: string) => void;
   removeFromSquad: (memberId: string) => void;
   moveSquadMember: (memberId: string, toSquadId: string) => void;
-  updateSquadRole: (squadId: string, role: SquadRole) => void;
-  updateSquadJoinerHero: (squadId: string, heroId: string) => void;
+  updateSquadJoinerHero: (squadId: string, type: 'defense' | 'offense', heroId: string) => void;
   updateSquadRallyLeader: (squadId: string, leaderId: string | undefined) => void;
 
   // Step 3: Rally Config
@@ -248,20 +246,12 @@ export const useStrategyStore = create<StrategyStore>()(
             m.id === memberId ? { ...m, squadId: undefined, group: 'turret' } : m,
           ),
         })),
-      updateSquadRole: (squadId, role) =>
-        set((state) => ({
-          squads: state.squads.map((s) => {
-            if (s.id !== squadId) return s;
-            const newName = role === 'defense'
-              ? s.name.replace(/카운터|공성/, '수성')
-              : s.name.replace(/수성/, '카운터');
-            return { ...s, role, name: newName };
-          }),
-        })),
-      updateSquadJoinerHero: (squadId, heroId) =>
+      updateSquadJoinerHero: (squadId, type, heroId) =>
         set((state) => ({
           squads: state.squads.map((s) =>
-            s.id === squadId ? { ...s, joinerHero: heroId } : s,
+            s.id === squadId
+              ? { ...s, ...(type === 'defense' ? { defenseJoinerHero: heroId } : { offenseJoinerHero: heroId }) }
+              : s,
           ),
         })),
       updateSquadRallyLeader: (squadId, leaderId) =>
@@ -481,9 +471,9 @@ export const useStrategyStore = create<StrategyStore>()(
     }),
     {
       name: 'wos-strategy-store',
-      version: 5,
+      version: 6,
       migrate: () => {
-        // v5: Turret rally support
+        // v6: Rally system refactor - no defense/counter distinction, dual joiner heroes
         return {
           allMembers: [],
           importedAt: null,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useStrategyStore } from '@/store/strategy-store';
 import { getDeepDiveIcon, HEROES } from '@/lib/constants';
 import { toast } from 'sonner';
-import type { AllianceMember, RallyLeaderInfo, AssignedMember, Squad, SquadRole } from '@/lib/types';
+import type { AllianceMember, RallyLeaderInfo, AssignedMember, Squad } from '@/lib/types';
 
 // Epic joiner heroes for selection
 const JOINER_HEROES = HEROES.filter((h) => h.generation === 0);
@@ -25,7 +25,6 @@ export default function AssignmentPage() {
     runAutoAssign,
     setRallyLeaders,
     moveSquadMember,
-    updateSquadRole,
     updateSquadJoinerHero,
     updateSquadRallyLeader,
   } = useStrategyStore();
@@ -243,8 +242,7 @@ export default function AssignmentPage() {
             <p className="text-xs text-gray-400 dark:text-gray-500">닉네임을 드래그하여 다른 조로 이동</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            {squads.filter((s) => s.role !== 'turret').map((squad) => {
-              return (
+            {squads.filter((s) => s.role === 'rally').map((squad) => (
               <div
                 key={squad.id}
                 onDragOver={(e) => handleDragOver(e, squad.id)}
@@ -253,15 +251,13 @@ export default function AssignmentPage() {
                 className={`p-3 sm:p-4 rounded-lg border transition-colors ${
                   dragOverSquadId === squad.id
                     ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20 ring-2 ring-yellow-400/30'
-                    : squad.role === 'defense'
-                      ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30'
-                      : 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30'
+                    : 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30'
                 }`}
               >
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">
-                      {squad.role === 'defense' ? '\uD83D\uDEE1\uFE0F' : '\u2694\uFE0F'} {squad.name}
+                      {'\u2694\uFE0F'} {squad.name}
                     </h4>
                     <span className="text-xs text-gray-400 dark:text-gray-500">
                       {squad.members.length}명
@@ -278,11 +274,7 @@ export default function AssignmentPage() {
                           .find((l) => l?.memberId === val)?.nickname;
                         toast.success(`집결장: ${leaderName ?? '미지정'}`);
                       }}
-                      className={`text-xs border rounded px-2 py-1 ${
-                        squad.role === 'defense'
-                          ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-200'
-                          : 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-600 text-red-800 dark:text-red-200'
-                      }`}
+                      className="text-xs bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-600 rounded px-2 py-1 text-green-800 dark:text-green-200"
                     >
                       <option value="">집결장 선택...</option>
                       {rallyLeaders?.main.memberId && (
@@ -295,41 +287,33 @@ export default function AssignmentPage() {
                         s.memberId && <option key={s.memberId} value={s.memberId}>대체{i + 1}: {s.nickname}</option>
                       ))}
                     </select>
-                    {/* Role selector */}
+                    {/* Defense joiner hero */}
                     <select
-                      value={squad.role}
+                      value={squad.defenseJoinerHero}
                       onChange={(e) => {
-                        const newRole = e.target.value as SquadRole;
-                        updateSquadRole(squad.id, newRole);
-                        if (newRole === 'defense' && squad.joinerHero === 'jessie') {
-                          updateSquadJoinerHero(squad.id, 'patrick');
-                        } else if (newRole === 'counter' && squad.joinerHero !== 'jessie') {
-                          updateSquadJoinerHero(squad.id, 'jessie');
-                        }
-                        toast.success(`${newRole === 'defense' ? '수성' : '공성'}으로 변경`);
+                        updateSquadJoinerHero(squad.id, 'defense', e.target.value);
+                        toast.success(`수성 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
                       }}
-                      className="text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="defense">수성</option>
-                      <option value="counter">공성</option>
-                    </select>
-                    {/* Joiner hero selector */}
-                    <select
-                      value={squad.joinerHero}
-                      onChange={(e) => {
-                        updateSquadJoinerHero(squad.id, e.target.value);
-                        toast.success(`조이너 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
-                      }}
-                      className="text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-gray-100"
+                      className="text-xs bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded px-2 py-1 text-blue-800 dark:text-blue-200"
                     >
                       <optgroup label="수성 영웅">
                         {DEFENSE_JOINERS.map((h) => (
-                          <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                          <option key={h.id} value={h.id}>{'\uD83D\uDEE1\uFE0F'} {h.nameKo}</option>
                         ))}
                       </optgroup>
+                    </select>
+                    {/* Offense joiner hero */}
+                    <select
+                      value={squad.offenseJoinerHero}
+                      onChange={(e) => {
+                        updateSquadJoinerHero(squad.id, 'offense', e.target.value);
+                        toast.success(`공성 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
+                      }}
+                      className="text-xs bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-600 rounded px-2 py-1 text-red-800 dark:text-red-200"
+                    >
                       <optgroup label="공성 영웅">
                         {OFFENSE_JOINERS.map((h) => (
-                          <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                          <option key={h.id} value={h.id}>{'\u2694\uFE0F'} {h.nameKo}</option>
                         ))}
                       </optgroup>
                     </select>
@@ -395,8 +379,7 @@ export default function AssignmentPage() {
                   </div>
                 )}
               </div>
-            );
-            })}
+            ))}
           </div>
         </section>
       )}
@@ -452,23 +435,33 @@ export default function AssignmentPage() {
                           s.memberId && <option key={s.memberId} value={s.memberId}>대체{i + 1}: {s.nickname}</option>
                         ))}
                       </select>
-                      {/* Joiner hero selector */}
+                      {/* Defense joiner hero */}
                       <select
-                        value={squad.joinerHero}
+                        value={squad.defenseJoinerHero}
                         onChange={(e) => {
-                          updateSquadJoinerHero(squad.id, e.target.value);
-                          toast.success(`조이너 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
+                          updateSquadJoinerHero(squad.id, 'defense', e.target.value);
+                          toast.success(`수성 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
                         }}
-                        className="text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-gray-100"
+                        className="text-xs bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded px-2 py-1 text-blue-800 dark:text-blue-200"
                       >
                         <optgroup label="수성 영웅">
                           {DEFENSE_JOINERS.map((h) => (
-                            <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                            <option key={h.id} value={h.id}>{'\uD83D\uDEE1\uFE0F'} {h.nameKo}</option>
                           ))}
                         </optgroup>
+                      </select>
+                      {/* Offense joiner hero */}
+                      <select
+                        value={squad.offenseJoinerHero}
+                        onChange={(e) => {
+                          updateSquadJoinerHero(squad.id, 'offense', e.target.value);
+                          toast.success(`공성 영웅: ${HEROES.find((h) => h.id === e.target.value)?.nameKo}`);
+                        }}
+                        className="text-xs bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-600 rounded px-2 py-1 text-red-800 dark:text-red-200"
+                      >
                         <optgroup label="공성 영웅">
                           {OFFENSE_JOINERS.map((h) => (
-                            <option key={h.id} value={h.id}>{h.nameKo} - {h.joinerEffect?.descriptionKo}</option>
+                            <option key={h.id} value={h.id}>{'\u2694\uFE0F'} {h.nameKo}</option>
                           ))}
                         </optgroup>
                       </select>

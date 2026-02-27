@@ -1,5 +1,4 @@
 import type { AllianceMember, AssignedMember, Squad, RallyLeaderAssignment } from './types';
-import { DEFENSE_JOINER_ROTATION } from './constants';
 import { generateId } from './utils';
 
 const TARGET_RALLY_SIZE = 12;
@@ -15,13 +14,12 @@ const SUBSTITUTE_LEADER_COUNT = 2;
  * Flow:
  * 1. FC5 members sorted by Deep Dive Rank
  * 2. Top 2 → Rally Leaders (main + sub)
- * 3. Remaining FC5 → divided into rally groups of 9~12
- *    - First half = defense rallies (Patrick rotation)
- *    - Second half = counter rallies (Jessie)
- * 4. Next members after rally groups → 2 substitutes per rally
- * 5. Remaining FC5 + all non-FC5 → turret pool
- * 6. Turret pool → divided into turretRallyCount turret rally groups
- * 7. Rest → pure turret/standby
+ * 3. Next 2 → Substitute Leaders
+ * 4. Remaining FC5 → divided into rally groups of 9~12
+ * 5. Next members after rally groups → 2 substitutes per rally
+ * 6. Remaining FC5 + all non-FC5 → turret pool
+ * 7. Turret pool → divided into turretRallyCount turret rally groups
+ * 8. Rest → pure turret/standby
  */
 export function autoAssignMembers(
   members: AllianceMember[],
@@ -89,9 +87,6 @@ export function autoAssignMembers(
     groupBuckets[index % numRallyGroups].push(member);
   });
 
-  // Split groups into defense and counter
-  const defenseCount = Math.ceil(numRallyGroups / 2);
-
   const squads: Squad[] = [];
   const assignedMembers: AssignedMember[] = [];
 
@@ -107,21 +102,15 @@ export function autoAssignMembers(
     assignedMembers.push({ ...m, group: 'castle' });
   });
 
-  // Create rally groups
+  // Create rally groups (no defense/counter distinction)
+  // Rally leader mapping: round-robin main → sub → main → sub...
+  const leaderIds = [mainLeader?.id, subLeader?.id].filter(Boolean);
   for (let i = 0; i < numRallyGroups; i++) {
-    const isDefense = i < defenseCount;
-    const groupNum = isDefense ? i + 1 : i - defenseCount + 1;
-    const defenseHeroId = isDefense
-      ? DEFENSE_JOINER_ROTATION[i % DEFENSE_JOINER_ROTATION.length]
-      : undefined;
-
     const squadId = generateId();
     const squadMembers: AssignedMember[] = groupBuckets[i].map((m) => ({
       ...m,
       group: 'castle' as const,
       squadId,
-      offenseHero: 'jessie',
-      defenseHero: isDefense ? defenseHeroId : undefined,
     }));
 
     assignedMembers.push(...squadMembers);
@@ -135,8 +124,6 @@ export function autoAssignMembers(
           ...subPool[subIndex],
           group: 'substitute',
           squadId,
-          offenseHero: 'jessie',
-          defenseHero: isDefense ? defenseHeroId : undefined,
         };
         groupSubs.push(sub);
         assignedMembers.push(sub);
@@ -145,13 +132,14 @@ export function autoAssignMembers(
 
     squads.push({
       id: squadId,
-      name: isDefense ? `수성 ${groupNum}랠리` : `카운터 ${groupNum}랠리`,
+      name: `랠리 ${i + 1}`,
       alliance: allianceName,
-      role: isDefense ? 'defense' : 'counter',
+      role: 'rally',
       members: squadMembers,
       substitutes: groupSubs,
-      joinerHero: isDefense ? defenseHeroId! : 'jessie',
-      rallyLeaderId: isDefense ? mainLeader?.id : subLeader?.id,
+      defenseJoinerHero: 'patrick',
+      offenseJoinerHero: 'jessie',
+      rallyLeaderId: leaderIds.length > 0 ? leaderIds[i % leaderIds.length] : undefined,
     });
   }
 
@@ -190,7 +178,8 @@ export function autoAssignMembers(
         role: 'turret',
         members: turretMembers,
         substitutes: [],
-        joinerHero: 'patrick',
+        defenseJoinerHero: 'patrick',
+        offenseJoinerHero: 'patrick',
         rallyLeaderId: turretLeaderId,
       });
     }

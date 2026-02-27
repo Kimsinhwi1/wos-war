@@ -37,6 +37,7 @@ interface StrategyStore {
   // Alliance Settings
   allianceSettings: AllianceSettings;
   updateAllianceSettings: (updates: Partial<AllianceSettings>) => void;
+  renameAllianceInTexts: (oldName: string, newName: string) => void;
 
   // Step 1: Members
   allMembers: AllianceMember[];
@@ -113,6 +114,50 @@ export const useStrategyStore = create<StrategyStore>()(
         set((state) => ({
           allianceSettings: { ...state.allianceSettings, ...updates },
         })),
+      renameAllianceInTexts: (oldName, newName) =>
+        set((state) => {
+          if (!oldName || !newName || oldName === newName) return state;
+
+          const r = (text: string): string => text.split(oldName).join(newName);
+
+          const rStep = (step: StrategyStep): StrategyStep => ({
+            ...step,
+            descriptionKo: r(step.descriptionKo),
+            descriptionEn: r(step.descriptionEn),
+            subSteps: step.subSteps?.map(rStep),
+          });
+
+          return {
+            strategies: state.strategies.map((s) => ({
+              ...s,
+              nameKo: r(s.nameKo),
+              nameEn: r(s.nameEn),
+              conditionKo: r(s.conditionKo),
+              conditionEn: r(s.conditionEn),
+              steps: s.steps.map(rStep),
+            })),
+            callSigns: state.callSigns.map((cs) => ({
+              ...cs,
+              situationKo: r(cs.situationKo),
+              situationEn: r(cs.situationEn),
+              caller: r(cs.caller),
+              messageKo: r(cs.messageKo),
+              messageEn: r(cs.messageEn),
+            })),
+            hanSpecialInstructions: state.hanSpecialInstructions.map((inst) => ({
+              ...inst,
+              titleKo: r(inst.titleKo),
+              titleEn: r(inst.titleEn),
+              contentKo: r(inst.contentKo),
+              contentEn: r(inst.contentEn),
+            })),
+            checklist: state.checklist.map((ci) => ({
+              ...ci,
+              textKo: r(ci.textKo),
+              textEn: r(ci.textEn),
+            })),
+          };
+        }),
 
       // Step 1
       allMembers: [],

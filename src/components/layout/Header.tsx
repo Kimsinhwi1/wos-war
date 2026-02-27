@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Stepper from './Stepper';
 import { useStrategyStore } from '@/store/strategy-store';
 
 export default function Header() {
-  const { allianceSettings, updateAllianceSettings } = useStrategyStore();
+  const { allianceSettings, updateAllianceSettings, renameAllianceInTexts } = useStrategyStore();
   const [showSettings, setShowSettings] = useState(false);
+  const prevNameRef = useRef('');
 
   return (
     <header className="sticky top-0 z-50">
@@ -59,7 +60,14 @@ export default function Header() {
                 <input
                   type="text"
                   value={allianceSettings.allianceName}
+                  onFocus={() => { prevNameRef.current = allianceSettings.allianceName; }}
                   onChange={(e) => updateAllianceSettings({ allianceName: e.target.value })}
+                  onBlur={() => {
+                    const old = prevNameRef.current;
+                    if (old && old !== allianceSettings.allianceName) {
+                      renameAllianceInTexts(old, allianceSettings.allianceName);
+                    }
+                  }}
                   className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-gray-100"
                   placeholder="HAN"
                 />
@@ -89,7 +97,14 @@ export default function Header() {
                 <input
                   type="text"
                   value={allianceSettings.partnerAlliance}
+                  onFocus={() => { prevNameRef.current = allianceSettings.partnerAlliance; }}
                   onChange={(e) => updateAllianceSettings({ partnerAlliance: e.target.value })}
+                  onBlur={() => {
+                    const old = prevNameRef.current;
+                    if (old && old !== allianceSettings.partnerAlliance) {
+                      renameAllianceInTexts(old, allianceSettings.partnerAlliance);
+                    }
+                  }}
                   className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-gray-100"
                   placeholder="KOR"
                 />

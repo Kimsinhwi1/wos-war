@@ -195,7 +195,12 @@ export function buildNotionBlocks(doc: StrategyDocument): BlockObjectRequest[] {
   blocks.push(heading2('분대 편성'));
   for (const squad of doc.squads) {
     const icon = squad.role === 'turret' ? '\uD83D\uDFE3' : '\u2694\uFE0F';
-    blocks.push(heading3(`${icon} ${squad.name} (수성: ${getHeroName(squad.defenseJoinerHero, 'ko')} / 공성: ${getHeroName(squad.offenseJoinerHero, 'ko')})`));
+    const leaderName = squad.rallyLeaderId
+      ? [doc.rallyLeaders.main, doc.rallyLeaders.sub, ...doc.rallyLeaders.substitutes]
+          .find((l) => l.memberId === squad.rallyLeaderId)?.nickname
+      : undefined;
+    const leaderText = leaderName ? ` [집결장: ${leaderName}]` : '';
+    blocks.push(heading3(`${icon} ${squad.name}${leaderText} (수성: ${getHeroName(squad.defenseJoinerHero, 'ko')} / 공성: ${getHeroName(squad.offenseJoinerHero, 'ko')})`));
     const memberRows = squad.members.map((m) => [
       `${getDeepDiveIcon(m.deepDiveRank)} ${m.nickname}`,
       m.combatPower,

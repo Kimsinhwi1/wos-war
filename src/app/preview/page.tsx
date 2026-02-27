@@ -184,10 +184,20 @@ export default function PreviewPage() {
         <h2 className="text-lg font-bold">
           {lang !== 'en' ? '분대 편성' : 'Squad Formation'}
         </h2>
-        {doc.squads.map((squad) => (
+        {doc.squads.map((squad) => {
+          const leaderName = squad.rallyLeaderId
+            ? [doc.rallyLeaders.main, doc.rallyLeaders.sub, ...doc.rallyLeaders.substitutes]
+                .find((l) => l.memberId === squad.rallyLeaderId)?.nickname
+            : undefined;
+          return (
           <div key={squad.id} className="mb-3">
             <h3 className="font-semibold">
               {squad.role === 'turret' ? '\uD83D\uDFE3' : '\u2694\uFE0F'} {squad.name}
+              {leaderName && (
+                <span className="ml-2 text-amber-600 text-xs font-normal">
+                  [{lang !== 'en' ? '집결장' : 'Leader'}: {leaderName}]
+                </span>
+              )}
               <span className="ml-2 text-gray-500 text-xs font-normal">
                 ({lang !== 'en' ? '수성' : 'Def'}: {getHeroName(squad.defenseJoinerHero, lang === 'en' ? 'en' : 'ko')} / {lang !== 'en' ? '공성' : 'Off'}: {getHeroName(squad.offenseJoinerHero, lang === 'en' ? 'en' : 'ko')})
               </span>
@@ -222,7 +232,8 @@ export default function PreviewPage() {
               </tbody>
             </table>
           </div>
-        ))}
+          );
+        })}
 
         <hr />
 

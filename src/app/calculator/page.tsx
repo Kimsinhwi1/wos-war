@@ -12,9 +12,9 @@ interface Stats {
 }
 
 interface TroopRatio {
-  infantry: number; // 방패(보병)
-  lancer: number;   // 창병
-  marksman: number;  // 궁병
+  infantry: number;
+  lancer: number;
+  marksman: number;
 }
 
 type Side = 'attack' | 'defense';
@@ -25,49 +25,49 @@ const TACTICAL_TIERS = [
     id: 'dominant',
     minRatio: 1.2,
     color: 'green' as const,
-    emoji: '\uD83D\uDFE2',
-    titleKo: '\uB2E8\uB3C5 \uC9D1\uACB0 \uB3CC\uD30C \uAC00\uB2A5',
+    emoji: '🟢',
+    titleKo: '단독 집결 돌파 가능',
     titleEn: 'Solo Rally Breakthrough',
     guideKo:
-      '\uC801\uACFC \uCCB4\uAE09 \uCC28\uC774\uAC00 \uB0A9\uB2C8\uB2E4. \uB2E8\uC77C \uC9D1\uACB0\uB9CC\uC73C\uB85C\uB3C4 \uD655\uC815\uC801\uC73C\uB85C \uC801\uC758 \uBC29\uC5B4\uC120\uC744 \uBD95\uAD34\uC2DC\uD0AC \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+      '적과 체급 차이가 납니다. 단일 집결만으로도 확정적으로 적의 방어선을 붕괴시킬 수 있습니다.',
     setupKo:
-      '\uACF5\uACA9 \uB300\uC7A5\uC758 \uCCAB \uCE78 \uC601\uC6C5\uC744 \u2018\uC81C\uC2DC\u2019 \uB610\uB294 \u2018\uC11C\uC724\u2019\uC73C\uB85C \uACE0\uC815\uD558\uC138\uC694. \uD0C0\uACA9 \uADF9\uB300\uD654\uB97C \uC704\uD574 \uBC29\uD328:\uCC3D:\uAD81 \uBE44\uC728\uC744 1.5 : 1 : 1 \uC815\uB3C4\uB85C \uC138\uD305\uD574\uB3C4 \uBB34\uBC29\uD569\uB2C8\uB2E4.',
+      "공격 대장의 첫 칸 영웅을 '제시' 또는 '서윤'으로 고정하세요. 타격 극대화를 위해 방패:창:궁 비율을 1.5 : 1 : 1 정도로 세팅해도 무방합니다.",
   },
   {
     id: 'even',
     minRatio: 0.8,
     color: 'yellow' as const,
-    emoji: '\uD83D\uDFE1',
-    titleKo: '\uC815\uBA74 \uC2B9\uBD80 - \uC9C4\uD615 \uC720\uC9C0\uC640 \uC601\uC6C5 \uC2A4\uC704\uCE6D',
+    emoji: '🟡',
+    titleKo: '정면 승부 - 진형 유지와 영웅 스위칭',
     titleEn: 'Head-on Fight - Formation & Hero Switching',
     guideKo:
-      '\uBE44\uC2B7\uD55C \uC2A4\uD399\uC785\uB2C8\uB2E4. \uC218\uC131 \uC2DC\uC5D0\uB294 \uBC29\uD328\uBCD1 \uC18C\uBAA8\uAC00 \uADF9\uC2EC\uD558\uBBC0\uB85C, \uBC29\uD328\uBCD1 \uBE44\uC728\uC744 \uCD5C\uC18C 50~60%(2:1:1 \uB610\uB294 3:1:1)\uB85C \uC138\uD305\uD558\uC5EC 1\uC5F4 \uC720\uC9C0\uB825\uC744 \uD655\uBCF4\uD558\uC138\uC694.',
+      '비슷한 스펙입니다. 수성 시에는 방패병 소모가 극심하므로, 방패병 비율을 최소 50~60%(2:1:1 또는 3:1:1)로 세팅하여 1열 유지력을 확보하세요.',
     setupKo:
-      '\uC218\uC131 \uC2DC \uCCAB \uCE78 \uC601\uC6C5\uC740 \uCCB4\uB825 \uBC84\uD504\uAC00 \uC788\uB294 \u2018\uD328\uD2B8\uB9AD\u2019\uC744 \uC801\uADF9 \uAE30\uC6A9\uD558\uC138\uC694 (\uD544\uB9AC\uB294 \uB370\uBBF8\uC9C0 \uAC10\uC18C \uBC84\uD504\uB97C \uB36E\uC5B4\uC50C\uC6B0\uBBC0\uB85C 1\uBA85 \uC774\uD558\uB85C \uD1B5\uC81C). \uC9D1\uACB0 \uCC38\uC5EC\uC790\uC758 \uBD88\uC758\uC218\uC815 \uB808\uBCA8\uC744 \uCD5C\uB300\uD55C \uB192\uAC8C \uD1B5\uC81C\uD574\uC57C \uD569\uB2C8\uB2E4.',
+      "수성 시 첫 칸 영웅은 체력 버프가 있는 '패트릭'을 적극 기용하세요 (필리는 데미지 감소 버프를 덮어씌우므로 1명 이하로 통제). 집결 참여자의 불의수정 레벨을 최대한 높게 통제해야 합니다.",
   },
   {
     id: 'disadvantage',
     minRatio: 0.5,
     color: 'orange' as const,
-    emoji: '\uD83D\uDFE0',
-    titleKo: '\uC815\uBA74 \uB3CC\uD30C \uBD88\uAC00 - \u2018\uC5F0\uC18D \uD0C0\uACA9(\uB2E4\uC911 \uB7A0\uB9AC)\u2019 \uC804\uC220 \uC694\uB9DD',
+    emoji: '🟠',
+    titleKo: "정면 돌파 불가 - '연속 타격(다중 랠리)' 전술 요망",
     titleEn: 'No Frontal Breakthrough - Multi-Rally Tactic Required',
     guideKo:
-      '\uB2E8\uC77C \uD0C0\uACA9\uC73C\uB85C\uB294 \uC808\uB300 \uBB3B\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC0C1\uB300\uC758 \uBC29\uD328\uBCD1 \uBE44\uC728\uC744 \uAC15\uC81C\uB85C \uBB34\uB108\uB728\uB9AC\uB294 \u2018\uC5F0\uC18D \uD0C0\uACA9\u2019 \uC804\uC220\uC744 \uC0AC\uC6A9\uD558\uC138\uC694.',
+      "단일 타격으로는 절대 뚫을 수 없습니다. 상대의 방패병 비율을 강제로 무너뜨리는 '연속 타격' 전술을 사용하세요.",
     setupKo:
-      '\uC11C\uBE0C \uC9D1\uACB0\uC7A5\uC774 \uBA3C\uC800 \uACF5\uACA9(1\uCC28 \uD0C0\uACA9)\uD558\uC5EC \uC801\uC758 \uBC29\uD328\uBCD1\uC744 \uC18C\uC9C4\uC2DC\uD0A8 \uC9C1\uD6C4, 5\uCD08 \uC774\uB0B4\uC758 \uC2DC\uCC28\uB85C \uAC00\uC7A5 \uAC15\uD55C \uBA54\uC778 \uC9D1\uACB0\uC7A5\uC774 \uBCF8\uB300(2\uCC28 \uD0C0\uACA9)\uB97C \uAF3D\uC544 \uB123\uC5B4 \uC9C4\uD615\uC744 \uD30C\uAD34\uD574\uC57C \uD569\uB2C8\uB2E4.',
+      '서브 집결장이 먼저 공격(1차 타격)하여 적의 방패병을 소진시킨 직후, 5초 이내의 시차로 가장 강한 메인 집결장이 본대(2차 타격)를 꽂아 넣어 진형을 파괴해야 합니다.',
   },
   {
     id: 'critical',
     minRatio: 0,
     color: 'red' as const,
-    emoji: '\uD83D\uDD34',
-    titleKo: '\uCCB4\uAE09 \uADF9\uBCF5 - 2\uAC1C \uC5F0\uB9F9 \uC5F0\uACC4 \u2018\uCE74\uC6B4\uD130 \uB7A0\uB9AC\u2019 \uD544\uC218',
+    emoji: '🔴',
+    titleKo: "체급 극복 - 2개 연맹 연계 '카운터 랠리' 필수",
     titleEn: 'Weight Class Gap - Dual Alliance Counter Rally Required',
     guideKo:
-      '\uC2A4\uD399\uC774 \uB108\uBB34 \uBC00\uB824 \uC77C\uBC18\uC801\uC778 \uACF5\uC218 \uAD50\uB300\uAC00 \uBD88\uAC00\uB2A5\uD569\uB2C8\uB2E4. \uC11C\uBE0C \uC5F0\uB9F9\uC744 \uD65C\uC6A9\uD55C \u2018\uCE74\uC6B4\uD130 \uB7A0\uB9AC(\uAD50\uCC28 \uC9D1\uACB0)\u2019 \uC804\uC220\uC744 \uC900\uBE44\uD558\uC138\uC694.',
+      "스펙이 너무 밀려 일반적인 공수 교대가 불가능합니다. 서브 연맹을 활용한 '카운터 랠리(교차 집결)' 전술을 준비하세요.",
     setupKo:
-      '\uC801\uC774 \uC6B0\uB9AC \uAC74\uBB3C\uC744 \uC810\uB839\uD558\uB3C4\uB85D \uC720\uB3C4\uD558\uC2ED\uC2DC\uC624. \uC810\uB839 \uC9C1\uD6C4\uB294 \uC218\uC131 \uC601\uC6C5\uC774 \uBBF8\uC801\uC6A9\uB418\uACE0 \uBC29\uD328\uBCD1\uC774 \uC18C\uC9C4\uB41C \uAC00\uC7A5 \uCDE8\uC57D\uD55C \uC0C1\uD0DC\uC785\uB2C8\uB2E4. \uC801 \uC9D1\uACB0\uC774 \uB3C4\uCC29\uD558\uAE30 \uC804\uC5D0 \uBBF8\uB9AC \uC2DC\uAC04\uC744 \uACC4\uC0B0\uD558\uC5EC, \uC801 \uB3C4\uCC29 \uD6C4 5\uCD08 \uB4A4\uC5D0 \uC6B0\uB9AC \uC11C\uBE0C \uC5F0\uB9F9\uC758 \uC9D1\uACB0 \uD0C0\uACA9\uC774 \uB4E4\uC5B4\uAC00\uB3C4\uB85D \uC124\uACC4\uD574 \uC989\uC2DC \uD0C8\uD658\uD574\uC57C \uD569\uB2C8\uB2E4.',
+      '적이 우리 건물을 점령하도록 유도하십시오. 점령 직후는 수성 영웅이 미적용되고 방패병이 소진된 가장 취약한 상태입니다. 적 집결이 도착하기 전에 미리 시간을 계산하여, 적 도착 후 5초 뒤에 우리 서브 연맹의 집결 타격이 들어가도록 설계해 즉시 탈환해야 합니다.',
   },
 ];
 
@@ -168,7 +168,7 @@ function TroopSlider({
         max={100}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
         style={{
           background: `linear-gradient(to right, var(--slider-color) ${value}%, #d1d5db ${value}%)`,
           // @ts-expect-error CSS custom property
@@ -207,7 +207,7 @@ function SidePanel({
   const borderColor = theme === 'blue' ? 'border-blue-300 dark:border-blue-700' : 'border-red-300 dark:border-red-700';
   const bgColor = theme === 'blue' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-red-50 dark:bg-red-950/30';
   const headerColor = theme === 'blue' ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400';
-  const dotColor = theme === 'blue' ? '\uD83D\uDD35' : '\uD83D\uDD34';
+  const dot = theme === 'blue' ? '🔵' : '🔴';
 
   const handleRatioChange = useCallback(
     (field: keyof TroopRatio, newValue: number) => {
@@ -219,14 +219,12 @@ function SidePanel({
       const updated = { ...ratio, [field]: newValue };
 
       if (otherSum === 0) {
-        // Distribute remaining equally among others
         const each = Math.floor(remaining / others.length);
         const extra = remaining - each * others.length;
         others.forEach((k, i) => {
           updated[k] = each + (i === 0 ? extra : 0);
         });
       } else {
-        // Distribute remaining proportionally
         let distributed = 0;
         others.forEach((k, i) => {
           if (i === others.length - 1) {
@@ -240,7 +238,6 @@ function SidePanel({
         });
       }
 
-      // Ensure no negative values
       (Object.keys(updated) as (keyof TroopRatio)[]).forEach((k) => {
         updated[k] = Math.max(0, updated[k]);
       });
@@ -253,53 +250,50 @@ function SidePanel({
   return (
     <div className={`rounded-lg border-2 ${borderColor} ${bgColor} p-4 space-y-4`}>
       <h3 className={`text-base font-bold ${headerColor} flex items-center gap-2`}>
-        {dotColor} {title}
+        {dot} {title}
       </h3>
 
-      {/* Stats */}
       <div className="space-y-2">
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          Stats
+          스탯 설정
         </p>
-        <StatInput label="ATK" value={stats.atk} onChange={(v) => setStats({ ...stats, atk: v })} />
-        <StatInput label="DEF" value={stats.def} onChange={(v) => setStats({ ...stats, def: v })} />
+        <StatInput label="ATK (공격)" value={stats.atk} onChange={(v) => setStats({ ...stats, atk: v })} />
+        <StatInput label="DEF (방어)" value={stats.def} onChange={(v) => setStats({ ...stats, def: v })} />
         <StatInput
-          label="Lethality"
+          label="치명타"
           value={stats.lethality}
           onChange={(v) => setStats({ ...stats, lethality: v })}
         />
-        <StatInput label="HP" value={stats.hp} onChange={(v) => setStats({ ...stats, hp: v })} />
+        <StatInput label="HP (체력)" value={stats.hp} onChange={(v) => setStats({ ...stats, hp: v })} />
       </div>
 
-      {/* Troop Ratio */}
       <div className="space-y-2">
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          {'\uD83D\uDDE1\uFE0F'} Troop Ratio (Total: {ratio.infantry + ratio.lancer + ratio.marksman}%)
+          병종 비율 (합계: {ratio.infantry + ratio.lancer + ratio.marksman}%)
         </p>
         <TroopSlider
-          label="\uBC29\uD328(\uBCF4\uBCD1)"
-          emoji={'\uD83D\uDEE1\uFE0F'}
+          label="방패(보병)"
+          emoji="🛡️"
           value={ratio.infantry}
           color="red"
           onChange={(v) => handleRatioChange('infantry', v)}
         />
         <TroopSlider
-          label="\uCC3D\uBCD1"
-          emoji={'\uD83D\uDD31'}
+          label="창병"
+          emoji="🔱"
           value={ratio.lancer}
           color="green"
           onChange={(v) => handleRatioChange('lancer', v)}
         />
         <TroopSlider
-          label="\uAD81\uBCD1"
-          emoji={'\uD83C\uDFF9'}
+          label="궁병"
+          emoji="🏹"
           value={ratio.marksman}
           color="blue"
           onChange={(v) => handleRatioChange('marksman', v)}
         />
       </div>
 
-      {/* Attack/Defense Toggle */}
       <div className="flex gap-2">
         <button
           onClick={() => setSide('attack')}
@@ -309,7 +303,7 @@ function SidePanel({
               : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
           }`}
         >
-          {'\uD83D\uDDE1\uFE0F'} \uACF5\uACA9
+          🗡️ 공격
         </button>
         <button
           onClick={() => setSide('defense')}
@@ -319,7 +313,7 @@ function SidePanel({
               : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
           }`}
         >
-          {'\uD83D\uDEE1\uFE0F'} \uC218\uBE44
+          🛡️ 수비
         </button>
       </div>
     </div>
@@ -330,17 +324,14 @@ function SidePanel({
 export default function CalculatorPage() {
   const router = useRouter();
 
-  // Ally
   const [allyStats, setAllyStats] = useState<Stats>({ atk: 100, def: 100, lethality: 100, hp: 100 });
   const [allyRatio, setAllyRatio] = useState<TroopRatio>({ infantry: 40, lancer: 30, marksman: 30 });
   const [allySide, setAllySide] = useState<Side>('attack');
 
-  // Enemy
   const [enemyStats, setEnemyStats] = useState<Stats>({ atk: 100, def: 100, lethality: 100, hp: 100 });
   const [enemyRatio, setEnemyRatio] = useState<TroopRatio>({ infantry: 40, lancer: 30, marksman: 30 });
   const [enemySide, setEnemySide] = useState<Side>('defense');
 
-  // Sync attack/defense toggle
   const handleAllySideChange = useCallback(
     (s: Side) => {
       setAllySide(s);
@@ -356,31 +347,20 @@ export default function CalculatorPage() {
     [],
   );
 
-  // Calculate
   const result = useMemo(() => {
     const myStrike = (allyStats.atk / 100) * (allyStats.lethality / 100);
     const myDefense = (allyStats.def / 100) * (allyStats.hp / 100);
     const enemyStrike = (enemyStats.atk / 100) * (enemyStats.lethality / 100);
     const enemyDefense = (enemyStats.def / 100) * (enemyStats.hp / 100);
 
-    // When ally is attacking: ratio = my strike / enemy defense
-    // When ally is defending: ratio = my defense / enemy strike
     const ratio =
       allySide === 'attack'
         ? enemyDefense > 0 ? myStrike / enemyDefense : 99
         : enemyStrike > 0 ? myDefense / enemyStrike : 99;
 
-    // Find tier
     const tier = TACTICAL_TIERS.find((t) => ratio >= t.minRatio) ?? TACTICAL_TIERS[TACTICAL_TIERS.length - 1];
 
-    return {
-      myStrike,
-      myDefense,
-      enemyStrike,
-      enemyDefense,
-      ratio,
-      tier,
-    };
+    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier };
   }, [allyStats, enemyStats, allySide]);
 
   const gaugePercent = clamp((result.ratio / (result.ratio + 1)) * 100, 5, 95);
@@ -388,25 +368,25 @@ export default function CalculatorPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
+      {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <span className="text-2xl">{'\u2694\uFE0F'}</span>
-          <span className="hidden sm:inline">\uC804\uD22C \uAD50\uD658\uBE44 \uC2DC\uBBAC\uB808\uC774\uD130</span>
-          <span className="sm:hidden">Combat Calc</span>
+          <span className="text-2xl">{'⚔️'}</span>
+          <span className="hidden sm:inline">전투 교환비 시뮬레이터</span>
+          <span className="sm:hidden">전투 계산기</span>
         </h2>
         <button
           onClick={() => router.back()}
           className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
         >
-          {'\u2190'} \uB3CC\uC544\uAC00\uAE30
+          {'←'} 돌아가기
         </button>
       </div>
 
-      {/* Input Panels */}
+      {/* 입력 패널 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SidePanel
-          title="\uC544\uAD70 (Ally)"
+          title="아군 (Ally)"
           theme="blue"
           stats={allyStats}
           setStats={setAllyStats}
@@ -416,7 +396,7 @@ export default function CalculatorPage() {
           setSide={handleAllySideChange}
         />
         <SidePanel
-          title="\uC801\uAD70 (Enemy)"
+          title="적군 (Enemy)"
           theme="red"
           stats={enemyStats}
           setStats={setEnemyStats}
@@ -427,17 +407,17 @@ export default function CalculatorPage() {
         />
       </div>
 
-      {/* Result Section */}
+      {/* 결과 섹션 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-5 space-y-5">
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          {'\uD83D\uDCCA'} \uC804\uD22C \uAD50\uD658\uBE44 \uACB0\uACFC
+          {'📊'} 전투 교환비 결과
         </h3>
 
-        {/* Gauge Bar */}
+        {/* 게이지 바 */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>{'\uD83D\uDD35'} \uC544\uAD70</span>
-            <span>{'\uD83D\uDD34'} \uC801\uAD70</span>
+            <span>{'🔵'} 아군</span>
+            <span>{'🔴'} 적군</span>
           </div>
           <div className="relative h-8 bg-red-200 dark:bg-red-900/40 rounded-full overflow-hidden">
             <div
@@ -452,11 +432,11 @@ export default function CalculatorPage() {
           </div>
         </div>
 
-        {/* Effective Values */}
+        {/* 유효 수치 */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-center">
             <p className="text-xs text-blue-500 dark:text-blue-400 mb-1">
-              {allySide === 'attack' ? 'My Effective Strike' : 'My Effective Defense'}
+              {allySide === 'attack' ? '아군 유효 타격' : '아군 유효 방어'}
             </p>
             <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
               {allySide === 'attack'
@@ -466,7 +446,7 @@ export default function CalculatorPage() {
           </div>
           <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-3 text-center">
             <p className="text-xs text-red-500 dark:text-red-400 mb-1">
-              {allySide === 'attack' ? 'Enemy Effective Defense' : 'Enemy Effective Strike'}
+              {allySide === 'attack' ? '적군 유효 방어' : '적군 유효 타격'}
             </p>
             <p className="text-lg font-bold text-red-700 dark:text-red-300">
               {allySide === 'attack'
@@ -477,7 +457,7 @@ export default function CalculatorPage() {
         </div>
       </div>
 
-      {/* Tactical Recommendation Card */}
+      {/* 전술 추천 카드 */}
       <div className={`rounded-lg border-2 ${style.border} ${style.bg} p-5 space-y-4`}>
         <div className="flex items-center gap-3">
           <span className="text-3xl">{result.tier.emoji}</span>
@@ -488,22 +468,20 @@ export default function CalculatorPage() {
         </div>
 
         <div className="space-y-3">
-          {/* Tactical Guide */}
           <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-              {'\uD83D\uDCCB'} \uC804\uC220 \uAC00\uC774\uB4DC
+              {'📋'} 전술 가이드
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
               {result.tier.guideKo}
             </p>
           </div>
 
-          {/* Hero/Setup Guide */}
           <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
               {result.tier.id === 'disadvantage' || result.tier.id === 'critical'
-                ? '\uD83C\uDFAF \uC2E4\uD589 \uBC29\uBC95'
-                : '\uD83E\uDDB8 \uC601\uC6C5/\uBCD1\uC885 \uC138\uD305'}
+                ? '🎯 실행 방법'
+                : '🦸 영웅/병종 세팅'}
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
               {result.tier.setupKo}
@@ -511,28 +489,27 @@ export default function CalculatorPage() {
           </div>
         </div>
 
-        {/* Ratio Badge */}
         <div className="flex justify-center">
           <span className={`text-xs px-3 py-1 rounded-full font-medium ${style.badge}`}>
-            \uAD50\uD658\uBE44 {result.ratio.toFixed(2)} : 1
+            교환비 {result.ratio.toFixed(2)} : 1
           </span>
         </div>
       </div>
 
-      {/* Formula Reference */}
+      {/* 계산 공식 참고 */}
       <details className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
         <summary className="text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
-          {'\uD83D\uDCD6'} \uACC4\uC0B0 \uACF5\uC2DD \uCC38\uACE0
+          {'📖'} 계산 공식 참고
         </summary>
         <div className="mt-3 space-y-2 text-xs text-gray-500 dark:text-gray-400 font-mono">
-          <p>Effective Strike = ATK(%) {'\u00D7'} Lethality(%)</p>
-          <p>Effective Defense = DEF(%) {'\u00D7'} HP(%)</p>
+          <p>Effective Strike = ATK(%) × Lethality(%)</p>
+          <p>Effective Defense = DEF(%) × HP(%)</p>
           <p>Damage Ratio = My Strike / Enemy Defense</p>
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p>{'\uD83D\uDFE2'} {'>'} 1.2 : \uB2E8\uB3C5 \uB3CC\uD30C \uAC00\uB2A5</p>
-            <p>{'\uD83D\uDFE1'} 0.8 ~ 1.2 : \uD638\uAC01 (\uC9C4\uD615 \uC720\uC9C0)</p>
-            <p>{'\uD83D\uDFE0'} 0.5 ~ 0.8 : \uBD88\uB9AC (\uB2E4\uC911 \uB7A0\uB9AC)</p>
-            <p>{'\uD83D\uDD34'} {'<'} 0.5 : \uB9E4\uC6B0 \uBD88\uB9AC (\uCE74\uC6B4\uD130 \uB7A0\uB9AC)</p>
+            <p>{'🟢'} {'>'} 1.2 : 단독 돌파 가능</p>
+            <p>{'🟡'} 0.8 ~ 1.2 : 호각 (진형 유지)</p>
+            <p>{'🟠'} 0.5 ~ 0.8 : 불리 (다중 랠리)</p>
+            <p>{'🔴'} {'<'} 0.5 : 매우 불리 (카운터 랠리)</p>
           </div>
         </div>
       </details>

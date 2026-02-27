@@ -449,6 +449,51 @@ export default function CalculatorPage() {
     setAllySide(s === 'attack' ? 'defense' : 'attack');
   }, []);
 
+  // ── 동적 조언 생성 ──────────────────────────────────
+  const getDynamicAdvice = useCallback(
+    (stats: AllStats, counts: TroopCounts, finalRatio: number) => {
+      const total = counts.infantry + counts.lancer + counts.marksman;
+      const infantryRatio = total > 0 ? Math.round((counts.infantry / total) * 100) : 0;
+
+      // 분기 진단
+      let diagnosis: string;
+      let advice: string;
+
+      if (finalRatio >= 1.0) {
+        // CASE C: 유리
+        diagnosis = '안정적인 스펙 차이로 승리가 예상됩니다.';
+        advice =
+          "현재의 병종 비율과 스탯 균형이 좋습니다. 다만 상대가 '카운터 랠리'를 시도할 수 있으니 도착 시간을 엄격히 통제하세요.";
+      } else if (infantryRatio >= 60) {
+        // CASE A: 방패병 충분하나 체급 열세
+        diagnosis = `방패병 비율(${infantryRatio}%)은 이상적이지만, 체급 차이로 인해 앞열이 버티지 못합니다.`;
+        advice =
+          "현재 문제는 병사 숫자가 아니라 '스탯 격차'입니다. 집결장의 [방어력/HP] 스탯을 높여 방패병의 생존 시간을 벌거나, 적의 방패병을 더 빨리 녹일 수 있도록 [공격력/파괴력]이 높은 딜러형 집결장으로 교체하세요.";
+      } else {
+        // CASE B: 방패병 부족 + 열세
+        diagnosis = '방패병 비율이 낮아 적의 공격에 1열이 너무 빨리 노출됩니다.';
+        advice = `방패병 비율을 60% 이상으로 높여 아군 딜러들이 공격할 시간을 확보해야 합니다. 현재 비율(${infantryRatio}%)에서는 딜러들이 제 성능을 내기 전에 전멸할 위험이 큽니다.`;
+      }
+
+      // 딜러 최적화 팁: 창병 vs 궁병 타격 배율 비교
+      const lancerStrike = (1 + stats.lancer.atk / 100) * (1 + stats.lancer.destruction / 100);
+      const marksmanStrike =
+        (1 + stats.marksman.atk / 100) * (1 + stats.marksman.destruction / 100);
+
+      let dealerTip: string;
+      if (lancerStrike > marksmanStrike) {
+        dealerTip = '현재 아군은 창병의 타격 효율이 더 좋습니다. 해당 병종의 비중을 높이는 것이 유리합니다.';
+      } else if (marksmanStrike > lancerStrike) {
+        dealerTip = '현재 아군은 궁병의 타격 효율이 더 좋습니다. 해당 병종의 비중을 높이는 것이 유리합니다.';
+      } else {
+        dealerTip = '창병과 궁병의 타격 효율이 동일합니다. 상황에 맞게 자유롭게 배분하세요.';
+      }
+
+      return { diagnosis, advice, dealerTip };
+    },
+    [],
+  );
+
   // 순수 스탯 × 병력 수 기반 교환비 계산 (스노우볼 효과 포함)
   const result = useMemo(() => {
     const myStrike = calcTotalIndex(allyStats, allyCounts, 'strike');
@@ -472,8 +517,10 @@ export default function CalculatorPage() {
 
     const tier = TACTICAL_TIERS.find((t) => ratio >= t.minRatio) ?? TACTICAL_TIERS[TACTICAL_TIERS.length - 1];
 
-    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier, baseRatio, troopWeightRatio };
-  }, [allyStats, allyCounts, enemyStats, enemyCounts, allySide]);
+    const dynamicAdvice = getDynamicAdvice(allyStats, allyCounts, ratio);
+
+    return { myStrike, myDefense, enemyStrike, enemyDefense, ratio, tier, baseRatio, troopWeightRatio, dynamicAdvice };
+  }, [allyStats, allyCounts, enemyStats, enemyCounts, allySide, getDynamicAdvice]);
 
   const gaugePercent = clamp((result.ratio / (result.ratio + 1)) * 100, 5, 95);
   const style = TIER_STYLES[result.tier.color];
@@ -600,10 +647,28 @@ export default function CalculatorPage() {
 
           <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+              {'🔍'} 상세 진단
+            </p>
+            <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+              {result.dynamicAdvice.diagnosis}
+            </p>
+          </div>
+
+          <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
               {'🎯'} 전술
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-              {result.tier.tacticKo}
+              {result.dynamicAdvice.advice}
+            </p>
+          </div>
+
+          <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-4">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+              {'💡'} 딜러 최적화
+            </p>
+            <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+              {result.dynamicAdvice.dealerTip}
             </p>
           </div>
         </div>

@@ -179,7 +179,7 @@ export function autoAssignMembers(
         members: turretMembers,
         substitutes: [],
         defenseJoinerHero: 'patrick',
-        offenseJoinerHero: 'patrick',
+        offenseJoinerHero: 'jessie',
         rallyLeaderId: turretLeaderId,
       });
     }

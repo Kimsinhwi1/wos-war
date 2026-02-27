@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ── Types ──────────────────────────────────────────────
@@ -146,18 +146,36 @@ function StatInput({
   value: number;
   onChange: (v: number) => void;
 }) {
+  const [display, setDisplay] = useState(String(value));
+
+  useEffect(() => {
+    const parsed = parseFloat(display);
+    if (isNaN(parsed) ? value !== 0 : parsed !== value) {
+      setDisplay(String(value));
+    }
+  }, [value]);
+
   return (
     <div className="flex items-center gap-2">
       <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-16 shrink-0">
         {label}
       </label>
       <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        type="text"
+        inputMode="decimal"
+        value={display}
+        onChange={(e) => {
+          let raw = e.target.value;
+          if (!/^\d*\.?\d*$/.test(raw)) return;
+          if (raw.length > 1 && raw[0] === '0' && raw[1] !== '.') {
+            raw = raw.replace(/^0+/, '') || '0';
+          }
+          setDisplay(raw);
+          const num = parseFloat(raw);
+          onChange(isNaN(num) ? 0 : num);
+        }}
+        onBlur={() => setDisplay(String(value))}
         className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white text-right"
-        min={0}
-        max={9999}
       />
       <span className="text-xs text-gray-400 shrink-0">%</span>
     </div>
@@ -237,6 +255,44 @@ function TroopStatsPanel({
   );
 }
 
+// ── Troop Count Input Component ──────────────────────
+function TroopCountInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [display, setDisplay] = useState(String(value));
+
+  useEffect(() => {
+    const parsed = parseInt(display, 10);
+    if (isNaN(parsed) ? value !== 0 : parsed !== value) {
+      setDisplay(String(value));
+    }
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={display}
+      onChange={(e) => {
+        let raw = e.target.value;
+        if (!/^\d*$/.test(raw)) return;
+        if (raw.length > 1 && raw[0] === '0') {
+          raw = raw.replace(/^0+/, '') || '0';
+        }
+        setDisplay(raw);
+        const num = parseInt(raw, 10);
+        onChange(isNaN(num) ? 0 : Math.max(0, num));
+      }}
+      onBlur={() => setDisplay(String(value))}
+      className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white text-right"
+    />
+  );
+}
+
 // ── Side Panel Component ──────────────────────────────
 function SidePanel({
   title,
@@ -306,13 +362,9 @@ function SidePanel({
             <span className="text-xs text-gray-600 dark:text-gray-400 w-16 shrink-0">
               {troop.emoji} {troop.label}
             </span>
-            <input
-              type="number"
+            <TroopCountInput
               value={troopCounts[troop.key]}
-              onChange={(e) => handleCountChange(troop.key, Number(e.target.value) || 0)}
-              className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white text-right"
-              min={0}
-              step={1000}
+              onChange={(v) => handleCountChange(troop.key, v)}
             />
             <span className="text-xs text-gray-400 shrink-0 w-8 text-right font-mono">
               {ratioPercent[troop.key]}%

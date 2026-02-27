@@ -9,6 +9,7 @@ import type { StrategyTemplate, StrategyTemplateId, SpecialInstruction } from '@
 export default function StrategyPage() {
   const router = useRouter();
   const {
+    allianceSettings,
     strategies,
     activeStrategies,
     toggleStrategy,
@@ -28,6 +29,7 @@ export default function StrategyPage() {
     toggleChecklistItem,
     addChecklistItem,
     removeChecklistItem,
+    swapAlliances,
     setCurrentStep,
   } = useStrategyStore();
 
@@ -41,7 +43,18 @@ export default function StrategyPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Step 4: 전략 편집</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Step 4: 전략 편집</h2>
+        <button
+          onClick={() => {
+            swapAlliances();
+            toast.success(`연맹 스왑 완료: ${allianceSettings.allianceName} ↔ ${allianceSettings.partnerAlliance}`);
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
+        >
+          🔄 {allianceSettings.allianceName} ↔ {allianceSettings.partnerAlliance}
+        </button>
+      </div>
 
       {/* Special Instructions */}
       <section className="space-y-4">

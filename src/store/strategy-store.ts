@@ -89,6 +89,9 @@ interface StrategyStore {
   addChecklistItem: (textKo: string, textEn: string) => void;
   removeChecklistItem: (id: string) => void;
 
+  // Alliance Swap
+  swapAlliances: () => void;
+
   // Step 5: Export
   generateDocument: () => StrategyDocument;
   notionExportStatus: 'idle' | 'exporting' | 'success' | 'error';
@@ -426,6 +429,62 @@ export const useStrategyStore = create<StrategyStore>()(
         set((state) => ({
           checklist: state.checklist.filter((ci) => ci.id !== id),
         })),
+
+      // Alliance Swap
+      swapAlliances: () =>
+        set((state) => {
+          const a = state.allianceSettings.allianceName;
+          const b = state.allianceSettings.partnerAlliance;
+          if (!a || !b || a === b) return state;
+
+          const PLACEHOLDER = '__SWAP__';
+          const swap = (text: string): string => {
+            return text.split(a).join(PLACEHOLDER).split(b).join(a).split(PLACEHOLDER).join(b);
+          };
+
+          const swapStep = (step: StrategyStep): StrategyStep => ({
+            ...step,
+            descriptionKo: swap(step.descriptionKo),
+            descriptionEn: swap(step.descriptionEn),
+            subSteps: step.subSteps?.map(swapStep),
+          });
+
+          return {
+            allianceSettings: {
+              ...state.allianceSettings,
+              allianceName: b,
+              partnerAlliance: a,
+            },
+            strategies: state.strategies.map((s) => ({
+              ...s,
+              nameKo: swap(s.nameKo),
+              nameEn: swap(s.nameEn),
+              conditionKo: swap(s.conditionKo),
+              conditionEn: swap(s.conditionEn),
+              steps: s.steps.map(swapStep),
+            })),
+            callSigns: state.callSigns.map((cs) => ({
+              ...cs,
+              situationKo: swap(cs.situationKo),
+              situationEn: swap(cs.situationEn),
+              caller: swap(cs.caller),
+              messageKo: swap(cs.messageKo),
+              messageEn: swap(cs.messageEn),
+            })),
+            hanSpecialInstructions: state.hanSpecialInstructions.map((inst) => ({
+              ...inst,
+              titleKo: swap(inst.titleKo),
+              titleEn: swap(inst.titleEn),
+              contentKo: swap(inst.contentKo),
+              contentEn: swap(inst.contentEn),
+            })),
+            checklist: state.checklist.map((ci) => ({
+              ...ci,
+              textKo: swap(ci.textKo),
+              textEn: swap(ci.textEn),
+            })),
+          };
+        }),
 
       // Step 5
       notionExportStatus: 'idle',
